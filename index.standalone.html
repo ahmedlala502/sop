@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TryGC Operations Knowledge Base v3.0</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Noto Kufi Arabic', 'sans-serif'],
+                    },
+                    colors: {
+                        trygc: {
+                            purple: '#52358C',
+                            deep: '#4A3573',
+                            orange: '#E8630C',
+                            lavender: '#A798BF',
+                            peach: '#E3A579',
+                            offwhite: '#F6F2F0',
+                            bg: '#100B1C',
+                            card: '#1D1331',
+                            border: '#2D1D4D',
+                            surface: '#150F24'
+                        },
+                        status: {
+                            success: '#39D98A',
+                            warning: '#E8630C',
+                            danger: '#FF5C7A',
+                            info: '#52358C'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base Styles */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            overflow: hidden;
+        }
+        
+        /* Language Control */
+        body.lang-en .ar-text { display: none !important; }
+        body.lang-ar .en-text { display: none !important; }
+        body.lang-ar { direction: rtl; font-family: 'Noto Kufi Arabic', sans-serif; }
+        body.lang-both .ar-text { 
+            display: block; 
+            direction: rtl; 
+            text-align: right; 
+            color: #A798BF; 
+            font-family: 'Noto Kufi Arabic', sans-serif;
+            font-size: 0.9em;
+            margin-top: 0.25rem;
+            line-height: 1.8;
+            border-top: 1px dashed #2D1D4D;
+            padding-top: 0.25rem;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #100B1C; }
+        ::-webkit-scrollbar-thumb { background: #4A3573; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #E8630C; }
+
+        /* Utilities */
+        .glass-panel { background: rgba(29, 19, 49, 0.7); backdrop-filter: blur(10px); }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Code Block */
+        .code-block { font-family: 'Courier New', monospace; white-space: pre-wrap; }
+        
+        /* Variable Highlighting */
+        .variable-highlight { color: #A78BFA; font-weight: 600; }
+
+        /* Mobile Sidebar Animation */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Prevent body scroll when mobile menu is open */
+        body.mobile-menu-open {
+            overflow: hidden;
+        }
+
+        /* Better touch targets for mobile */
+        @media (max-width: 768px) {
+            button, a {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* Responsive table wrapper */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Workflow diagram mobile */
+        .workflow-mobile {
+            min-width: 600px;
+        }
+    </style>
+</head>
+<body class="bg-trygc-bg text-trygc-offwhite h-screen flex overflow-hidden lang-both transition-colors duration-300">
+
+    <!-- SIDEBAR Navigation -->
+    <aside id="sidebar" class="w-72 bg-trygc-surface border-r border-trygc-border flex flex-col transition-all duration-300 transform fixed md:relative z-30 h-full md:translate-x-0 -translate-x-full">
+        <!-- Brand -->
+        <div class="h-16 flex items-center px-4 sm:px-6 border-b border-trygc-border bg-trygc-bg/50 backdrop-blur-md">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-trygc-purple to-trygc-orange flex items-center justify-center text-white font-bold mr-3 shadow-lg shadow-trygc-purple/30">GC</div>
+            <div>
+                <h1 class="font-bold text-sm tracking-wide text-white">TRYGC OPS</h1>
+                <span class="text-[10px] text-trygc-lavender uppercase tracking-widest">Knowledge Base v3.0</span>
+            </div>
+        </div>
+
+        <!-- Nav Links -->
+        <nav id="nav-container" class="flex-1 overflow-y-auto py-4 px-3 space-y-1"></nav>
+
+        <!-- User Profile -->
+        <div class="p-4 border-t border-trygc-border">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-trygc-deep flex items-center justify-center text-xs font-bold border border-trygc-lavender/30">OP</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-medium text-white truncate">Ops Lead</p>
+                    <p class="text-[10px] text-trygc-lavender truncate">Grand Community</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-full relative min-w-0">
+        <!-- Top Bar -->
+        <header class="h-16 border-b border-trygc-border bg-trygc-bg/80 backdrop-blur-md flex items-center justify-between px-4 sm:px-6 z-20 sticky top-0">
+            <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                <button onclick="toggleSidebar()" class="md:hidden text-trygc-lavender hover:text-white p-2 -ml-2">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <!-- Search Bar - Hidden on small mobile -->
+                <div class="relative hidden sm:block flex-1 max-w-96 group">
+                    <span class="material-symbols-outlined absolute left-3 top-2 text-trygc-lavender group-focus-within:text-trygc-orange transition-colors text-sm">search</span>
+                    <input type="text" placeholder="Search SOPs, Templates..." class="w-full bg-trygc-surface border border-trygc-border rounded-lg pl-9 pr-4 py-1.5 text-sm text-trygc-offwhite focus:outline-none focus:border-trygc-orange transition-all placeholder-trygc-lavender/50">
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Language Toggle -->
+                <div class="flex bg-trygc-surface border border-trygc-border rounded-lg p-0.5">
+                    <button onclick="setLang('en')" class="lang-btn px-2 sm:px-3 py-1 rounded-md text-[10px] font-bold transition-all" data-lang="en">EN</button>
+                    <button onclick="setLang('both')" class="lang-btn px-2 sm:px-3 py-1 rounded-md text-[10px] font-bold transition-all bg-trygc-purple text-white shadow" data-lang="both">BOTH</button>
+                    <button onclick="setLang('ar')" class="lang-btn px-2 sm:px-3 py-1 rounded-md text-[10px] font-bold transition-all" data-lang="ar">AR</button>
+                </div>
+                
+                <div class="h-4 w-px bg-trygc-border mx-1 hidden sm:block"></div>
+
+                <!-- Export Button -->
+                <button onclick="exportHTML()" class="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-trygc-orange hover:bg-orange-600 text-white rounded-lg text-xs font-bold transition-colors shadow-lg shadow-orange-900/20">
+                    <span class="material-symbols-outlined text-[16px]">download</span>
+                    <span class="hidden sm:inline">Export</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Viewer -->
+        <main id="page-content" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 scroll-smooth relative"></main>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 hidden md:hidden"></div>
+
+    <script>
+        // --- APP CONFIGURATION ---
+        const config = {
+            nav: [
+                { id: 'cover', icon: 'home_app_logo', labelEn: 'System Overview', labelAr: 'نظرة عامة' },
+                { id: 'ia', icon: 'schema', labelEn: 'Navigation & IA', labelAr: 'هيكلة التنقل' },
+                
+                { type: 'header', labelEn: 'TEAM SOPs', labelAr: 'إجراءات الفرق' },
+                { id: 'sop_community', icon: 'groups', labelEn: 'Community', labelAr: 'الكوميونيتي' },
+                { id: 'sop_coordination', icon: 'hub', labelEn: 'Coordination', labelAr: 'التنسيق' },
+                { id: 'sop_chat', icon: 'chat', labelEn: 'Chat/WhatsApp', labelAr: 'الشات' },
+                { id: 'sop_followup', icon: 'schedule', labelEn: 'Follow-Up', labelAr: 'المتابعة' },
+                { id: 'sop_coverage', icon: 'visibility', labelEn: 'Coverage & QA', labelAr: 'التغطية' },
+
+                { type: 'header', labelEn: 'OPERATIONS', labelAr: 'العمليات' },
+                { id: 'workflows', icon: 'account_tree', labelEn: 'Workflow Maps', labelAr: 'خرائط العمل' },
+                { id: 'raci', icon: 'table_view', labelEn: 'RACI Matrix', labelAr: 'مصفوفة RACI' },
+                { id: 'gsheets', icon: 'grid_on', labelEn: 'Sheets Blueprint', labelAr: 'هيكلة الشيتات' },
+                { id: 'templates', icon: 'content_copy', labelEn: 'Templates Library', labelAr: 'مكتبة القوالب' },
+                { id: 'kpis', icon: 'monitoring', labelEn: 'KPIs & SLAs', labelAr: 'المؤشرات' },
+                { id: 'components', icon: 'widgets', labelEn: 'Design System', labelAr: 'نظام التصميم' },
+            ]
+        };
+
+        let currentState = {
+            tab: 'cover',
+            lang: 'both'
+        };
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSidebar();
+            loadPage(currentState.tab);
+        });
+
+        // --- CORE FUNCTIONS ---
+        function setLang(mode) {
+            currentState.lang = mode;
+            document.body.className = document.body.className.replace(/lang-\w+/, `lang-${mode}`);
+            
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                if(btn.dataset.lang === mode) {
+                    btn.classList.add('bg-trygc-purple', 'text-white', 'shadow');
+                    btn.classList.remove('text-trygc-lavender');
+                } else {
+                    btn.classList.remove('bg-trygc-purple', 'text-white', 'shadow');
+                    btn.classList.add('text-trygc-lavender');
+                }
+            });
+
+            if (mode === 'ar') {
+                document.documentElement.dir = 'rtl';
+            } else {
+                document.documentElement.dir = 'ltr';
+            }
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            const isClosed = sb.classList.contains('-translate-x-full');
+            
+            if(isClosed) {
+                sb.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.classList.add('mobile-menu-open');
+            } else {
+                sb.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('mobile-menu-open');
+            }
+        }
+
+        function renderSidebar() {
+            const container = document.getElementById('nav-container');
+            container.innerHTML = config.nav.map(item => {
+                if(item.type === 'header') {
+                    return `
+                        <div class="px-4 mt-6 mb-2">
+                            <h3 class="text-[10px] font-bold text-trygc-lavender/50 uppercase tracking-widest flex flex-col">
+                                <span class="en-text">${item.labelEn}</span>
+                                <span class="ar-text text-right" style="font-size: 9px; margin-top: 2px;">${item.labelAr}</span>
+                            </h3>
+                        </div>
+                    `;
+                }
+                const active = currentState.tab === item.id;
+                return `
+                    <button onclick="loadPage('${item.id}')" 
+                        class="w-full text-left flex items-start gap-3 px-3 py-2 rounded-lg transition-all group relative ${active ? 'bg-trygc-card text-white border border-trygc-border shadow-sm' : 'text-trygc-lavender hover:bg-trygc-card/50 hover:text-white'}">
+                        ${active ? '<div class="absolute left-0 top-2 bottom-2 w-1 bg-trygc-orange rounded-r"></div>' : ''}
+                        <span class="material-symbols-outlined text-[20px] ${active ? 'text-trygc-orange' : 'group-hover:text-trygc-peach'}">${item.icon}</span>
+                        <div class="flex-1">
+                            <span class="en-text block text-sm font-medium">${item.labelEn}</span>
+                            <span class="ar-text block text-xs opacity-80 mt-0.5 font-medium">${item.labelAr}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function loadPage(id) {
+            currentState.tab = id;
+            renderSidebar();
+            if(window.innerWidth < 768) toggleSidebar();
+
+            const viewer = document.getElementById('page-content');
+            viewer.innerHTML = '<div class="flex h-96 items-center justify-center text-trygc-orange animate-pulse"><span class="material-symbols-outlined text-4xl">hourglass_empty</span></div>';
+
+            setTimeout(() => {
+                let html = '';
+                try {
+                    switch(id) {
+                        case 'cover': html = renderCover(); break;
+                        case 'ia': html = renderIA(); break;
+                        case 'workflows': html = renderWorkflows(); break;
+                        case 'raci': html = renderRACI(); break;
+                        case 'gsheets': html = renderGSheets(); break;
+                        case 'templates': html = renderTemplates(); break;
+                        case 'kpis': html = renderKPIs(); break;
+                        case 'components': html = renderComponents(); break;
+                        default: 
+                            if(id.startsWith('sop_')) html = renderSOP(id);
+                            else html = renderCover();
+                    }
+                    viewer.innerHTML = `<div class="fade-in max-w-6xl mx-auto pb-20">${html}</div>`;
+                } catch(e) {
+                    viewer.innerHTML = `<div class="p-8 text-status-danger">Error: ${e.message}</div>`;
+                }
+            }, 100);
+        }
+
+        function exportHTML() {
+            const docClone = document.documentElement.outerHTML;
+            const blob = new Blob([docClone], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `TryGC_Ops_KB_${new Date().toISOString().slice(0,10)}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- CONTENT RENDERERS ---
+
+        function renderCover() {
+            return `
+                <div class="text-center py-8 sm:py-16">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-trygc-purple to-trygc-orange rounded-3xl mx-auto flex items-center justify-center text-4xl sm:text-5xl font-bold text-white mb-6 sm:mb-8 shadow-2xl shadow-trygc-orange/20 ring-4 ring-trygc-bg ring-offset-2 ring-offset-trygc-border">GC</div>
+                    
+                    <h1 class="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6 tracking-tight text-white px-4">
+                        <span class="en-text">TryGC Operations Knowledge Base</span>
+                        <span class="ar-text block text-trygc-peach mt-2 font-arabic text-2xl sm:text-3xl md:text-5xl">قاعدة معرفة العمليات</span>
+                    </h1>
+                    
+                    <p class="text-base sm:text-lg text-trygc-lavender mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4">
+                        <span class="en-text">The single source of truth for Grand Community operations. SOPs, workflows, RACI, templates, KPIs, and troubleshooting — all in one place.</span>
+                        <span class="ar-text">المصدر الوحيد للحقيقة لعمليات جراند كوميونيتي. الإجراءات، خرائط العمل، RACI، القوالب، المؤشرات — كل شيء في مكان واحد.</span>
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 text-left mb-8 sm:mb-12 px-4">
+                        ${[
+                            { page: 'sop_community', icon: 'groups', titleEn: 'Team SOPs', titleAr: 'إجراءات الفرق', descEn: 'Step-by-step operational procedures for each team', descAr: 'إجراءات تشغيلية خطوة بخطوة لكل فريق' },
+                            { page: 'raci', icon: 'table_view', titleEn: 'RACI Matrix', titleAr: 'مصفوفة RACI', descEn: 'Clear ownership: Responsible, Accountable, Consulted, Informed', descAr: 'ملكية واضحة: المسؤول، المسائل، المستشار، المُبلّغ' },
+                            { page: 'templates', icon: 'content_copy', titleEn: 'Templates', titleAr: 'القوالب', descEn: 'Ready-to-send bilingual message templates', descAr: 'قوالب رسائل ثنائية اللغة جاهزة للإرسال' }
+                        ].map(card => `
+                            <div onclick="loadPage('${card.page}')" class="group p-4 sm:p-6 bg-trygc-card border border-trygc-border rounded-xl hover:border-trygc-orange cursor-pointer transition-all hover:-translate-y-1 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><span class="material-symbols-outlined text-6xl sm:text-8xl">${card.icon}</span></div>
+                                <h3 class="font-bold text-base sm:text-lg mb-2 text-white group-hover:text-trygc-orange transition-colors">
+                                    <span class="en-text">${card.titleEn}</span>
+                                    <span class="ar-text">${card.titleAr}</span>
+                                </h3>
+                                <p class="text-xs sm:text-sm text-trygc-lavender">
+                                    <span class="en-text">${card.descEn}</span>
+                                    <span class="ar-text">${card.descAr}</span>
+                                </p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Non-Negotiables -->
+                    <div class="bg-trygc-card border border-trygc-orange/30 rounded-xl p-4 sm:p-6 text-left max-w-4xl mx-auto">
+                        <h2 class="text-lg sm:text-xl font-bold text-trygc-orange mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined">shield</span>
+                            <span class="en-text">Non-Negotiable Principles</span>
+                            <span class="ar-text">مبادئ غير قابلة للتفاوض</span>
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                            ${[
+                                { en: 'Single source of truth: System + Sheet + Folder must always match', ar: 'مصدر حقيقة واحد: النظام + الشيت + الفولدر يجب أن يتطابقوا دائماً' },
+                                { en: 'Zero verbal exceptions: all changes must be documented', ar: 'صفر استثناءات شفهية: كل التغييرات يجب توثيقها' },
+                                { en: 'Done = fully compliant with the client brief', ar: 'تم = مطابق للبرِيف بالكامل' },
+                                { en: 'Escalate early: risks must be flagged within 2 hours', ar: 'تصعيد مبكر: المخاطر يجب الإبلاغ عنها خلال ساعتين' }
+                            ].map(rule => `
+                                <div class="flex items-start gap-2 p-3 bg-trygc-bg rounded">
+                                    <span class="text-status-success mt-0.5">●</span>
+                                    <div class="text-xs sm:text-sm">
+                                        <span class="en-text block text-trygc-offwhite">${rule.en}</span>
+                                        <span class="ar-text block text-trygc-lavender">${rule.ar}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderIA() {
+            return `
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                    <span class="en-text">Information Architecture</span>
+                    <span class="ar-text">هيكلة المعلومات</span>
+                </h1>
+                <div class="prose prose-invert max-w-none">
+                    <p class="text-trygc-lavender mb-6 text-sm sm:text-base">
+                        <span class="en-text">The Knowledge Base is organized into logical sections for easy navigation and daily operational use.</span>
+                        <span class="ar-text">قاعدة المعرفة منظمة في أقسام منطقية لسهولة التنقل والاستخدام التشغيلي اليومي.</span>
+                    </p>
+                    
+                    <div class="space-y-3 sm:space-y-4">
+                        ${config.nav.filter(n => !n.type).map(item => `
+                            <div class="bg-trygc-card border border-trygc-border rounded-lg p-3 sm:p-4 hover:border-trygc-orange transition-colors cursor-pointer" onclick="loadPage('${item.id}')">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-trygc-orange text-xl sm:text-2xl">${item.icon}</span>
+                                    <div>
+                                        <div class="font-bold text-white text-sm sm:text-base">
+                                            <span class="en-text">${item.labelEn}</span>
+                                            <span class="ar-text">${item.labelAr}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRACI() {
+            const raciData = [
+                { task: 'Booking Order Creation', taskAr: 'إنشاء أمر الحجز', c: 'R', co: 'C', ch: 'I', f: '-', cv: '-', l: 'A' },
+                { task: 'Campaign Folder Setup', taskAr: 'تجهيز فولدرات الحملة', c: 'C', co: 'R/A', ch: 'I', f: '-', cv: '-', l: 'I' },
+                { task: 'Influencer List Selection', taskAr: 'اختيار قائمة المؤثرين', c: 'R', co: 'C', ch: '-', f: '-', cv: '-', l: 'A' },
+                { task: 'Sending Invitations', taskAr: 'إرسال الدعوات', c: 'I', co: 'C', ch: 'R', f: 'C', cv: '-', l: 'I' },
+                { task: 'Morning Reminders (Today)', taskAr: 'تذكيرات الصباح (اليوم)', c: '-', co: 'I', ch: 'C', f: 'R/A', cv: '-', l: '-' },
+                { task: 'Brief Sending (24h before)', taskAr: 'إرسال البريف (قبل 24 ساعة)', c: '-', co: 'C', ch: 'R', f: 'C', cv: '-', l: 'I' },
+                { task: 'Coverage QA & Upload', taskAr: 'فحص التغطية والرفع', c: '-', co: 'I', ch: '-', f: 'C', cv: 'R/A', l: 'I' },
+                { task: 'Missing/Need Resolution', taskAr: 'حل النواقص والتعديل', c: 'C', co: 'I', ch: 'C', f: 'R', cv: 'C', l: 'A' },
+                { task: 'pCloud Archiving', taskAr: 'أرشفة pCloud', c: '-', co: 'I', ch: '-', f: '-', cv: 'R/A', l: 'I' },
+                { task: 'Final Report Delivery', taskAr: 'تسليم التقرير النهائي', c: 'C', co: 'R', ch: '-', f: '-', cv: 'C', l: 'A' },
+                { task: 'System Reconciliation', taskAr: 'مطابقة النظام', c: 'C', co: 'R', ch: '-', f: '-', cv: 'C', l: 'A' }
+            ];
+
+            return `
+                <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white">
+                        <span class="en-text">RACI Matrix</span>
+                        <span class="ar-text">مصفوفة RACI</span>
+                    </h1>
+                    <div class="text-xs text-trygc-lavender flex flex-wrap gap-2 sm:gap-3">
+                        <span class="flex items-center gap-1"><b class="text-trygc-orange">R</b> Responsible</span>
+                        <span class="flex items-center gap-1"><b class="text-trygc-purple">A</b> Accountable</span>
+                        <span class="flex items-center gap-1"><b class="text-blue-400">C</b> Consulted</span>
+                        <span class="flex items-center gap-1"><b class="text-gray-400">I</b> Informed</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive rounded-xl border border-trygc-border shadow-2xl">
+                    <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-trygc-deep text-white text-[10px] sm:text-xs uppercase tracking-wider">
+                                <th class="p-2 sm:p-4 border-b border-trygc-border min-w-[180px] sm:min-w-[220px] sticky left-0 bg-trygc-deep z-10">
+                                    <span class="en-text">Activity</span>
+                                    <span class="ar-text">النشاط</span>
+                                </th>
+                                <th class="p-2 sm:p-4 border-b border-trygc-border text-center w-16 sm:w-24">Comm</th>
+                                <th class="p-2 sm:p-4 border-b border-trygc-border text-center w-16 sm:w-24">Coord</th>
+                                <th class="p-2 sm:p-4 border-b border-trygc-border text-center w-16 sm:w-24">Chat</th>
+                                <th class="p-2 sm:p-4 border-b border-trygc-border text-center w-16 sm:w-24">F-Up</th>
+                                <th class="p-2 sm:p-4 border-b border-trygc-border text-center w-16 sm:w-24">Cov</th>
+                                <th class="p-2 sm:p-4 border-b border-trygc-border text-center w-16 sm:w-24 bg-trygc-purple/50">Lead</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-trygc-border bg-trygc-card">
+                            ${raciData.map(row => `
+                                <tr class="hover:bg-trygc-purple/10 transition-colors">
+                                    <td class="p-2 sm:p-4 sticky left-0 bg-trygc-card font-medium text-trygc-offwhite shadow-[2px_0_5px_rgba(0,0,0,0.2)]">
+                                        <span class="en-text block text-xs sm:text-sm">${row.task}</span>
+                                        <span class="ar-text block text-trygc-lavender text-[10px] sm:text-xs">${row.taskAr}</span>
+                                    </td>
+                                    ${[row.c, row.co, row.ch, row.f, row.cv, row.l].map(val => {
+                                        let colorClass = 'text-gray-500';
+                                        if(val.includes('R')) colorClass = 'text-trygc-orange font-bold bg-trygc-orange/10';
+                                        else if(val.includes('A')) colorClass = 'text-trygc-purple font-bold bg-trygc-purple/10';
+                                        else if(val.includes('C')) colorClass = 'text-blue-400';
+                                        return `<td class="p-2 sm:p-4 text-center border-l border-trygc-border/30"><span class="inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded text-xs sm:text-sm ${val.length > 1 ? 'px-1 sm:px-2 w-auto' : ''} ${colorClass}">${val}</span></td>`;
+                                    }).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 sm:mt-8 bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                    <h3 class="font-bold text-white mb-4 flex items-center gap-2 text-sm sm:text-base">
+                        <span class="material-symbols-outlined">info</span>
+                        <span class="en-text">RACI Legend</span>
+                        <span class="ar-text">دليل RACI</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                        ${[
+                            { letter: 'R', colorClass: 'text-trygc-orange', en: 'Responsible: Does the work, executes the task', ar: 'المسؤول: ينفذ العمل، يقوم بالمهمة' },
+                            { letter: 'A', colorClass: 'text-trygc-purple', en: 'Accountable: Owns the outcome, final decision maker', ar: 'المسائل: يملك النتيجة، صاحب القرار النهائي' },
+                            { letter: 'C', colorClass: 'text-blue-400', en: 'Consulted: Provides input, two-way communication', ar: 'المستشار: يقدم المدخلات، تواصل ثنائي الاتجاه' },
+                            { letter: 'I', colorClass: 'text-gray-400', en: 'Informed: Kept in the loop, one-way communication', ar: 'المُبلّغ: يُبقى على اطلاع، تواصل أحادي الاتجاه' }
+                        ].map(item => `
+                            <div class="flex items-start gap-3 p-3 bg-trygc-bg rounded">
+                                <span class="font-bold text-base sm:text-lg ${item.colorClass}">${item.letter}</span>
+                                <div>
+                                    <span class="en-text block text-trygc-offwhite">${item.en}</span>
+                                    <span class="ar-text block text-trygc-lavender">${item.ar}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGSheets() {
+            const tabs = [
+                { name: 'Cam_Info', desc: 'Master Data', color: 'green', cols: ['Brand', 'Country', 'City', 'Branches', 'Brief_Link', 'Map_Link', 'Budget', 'Start_Date', 'End_Date'] },
+                { name: 'Influencer_List', desc: 'Execution Core', color: 'blue', cols: ['Name', 'Username', 'Platform', 'Date', 'Status (Dropdown)', 'Reply_Status', 'Coverage_Link', 'Notes'] },
+                { name: 'Missing_Need_Tracker', desc: 'Issues Log', color: 'orange', cols: ['Issue_Type', 'Influencer', 'Owner', 'Time_Logged', 'Resolution_Status', 'Priority'] },
+                { name: 'Daily_Plan', desc: 'Schedule View', color: 'purple', cols: ['Date', 'Influencer_Count', 'Confirmed_Count', 'Actual_Visits', 'Risk_Flag'] },
+                { name: 'Coverage_QA', desc: 'Quality Control', color: 'teal', cols: ['Influencer', 'Date', 'Brief_Compliant', 'pCloud_Link', 'QA_Notes', 'Status'] }
+            ];
+
+            return `
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                    <span class="en-text">Google Sheets Blueprint</span>
+                    <span class="ar-text">هيكلة جوجل شيتس</span>
+                </h1>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                    <!-- Visual Workbook -->
+                    <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-green-300"></div>
+                        <h3 class="text-green-400 font-bold mb-4 sm:mb-6 flex items-center gap-2 text-sm sm:text-base">
+                            <span class="material-symbols-outlined">table_chart</span> 
+                            <span class="en-text">Master_Campaign_Sheet</span>
+                            <span class="ar-text">ملف_الحملة_الرئيسي</span>
+                        </h3>
+                        
+                        <div class="space-y-3 sm:space-y-4">
+                            ${tabs.map(tab => `
+                                <div class="bg-trygc-surface border border-trygc-border rounded-lg p-3 sm:p-4 hover:border-${tab.color}-500/50 transition-colors group">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <div class="font-bold text-white group-hover:text-${tab.color}-400 transition-colors text-sm sm:text-base">${tab.name}</div>
+                                        <div class="text-[10px] text-trygc-lavender uppercase tracking-widest">${tab.desc}</div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${tab.cols.map(c => `<span class="text-[10px] px-2 py-1 bg-trygc-bg rounded text-gray-400 border border-trygc-border">${c}</span>`).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Rules Panel -->
+                    <div class="space-y-4 sm:space-y-6">
+                        <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                            <h3 class="text-trygc-orange font-bold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                                <span class="material-symbols-outlined">check_circle</span> 
+                                <span class="en-text">Data Validations</span>
+                                <span class="ar-text">التحققات</span>
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="text-xs text-trygc-lavender uppercase mb-2">Status Column</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${['Planned', 'Invited', 'Confirmed', 'Cancelled', 'Done'].map((s, i) => {
+                                            const colors = ['gray-700', 'blue-600', 'green-600', 'red-600', 'purple-600'];
+                                            return `<span class="px-2 py-1 bg-${colors[i]} rounded text-xs text-white">${s}</span>`;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-trygc-lavender uppercase mb-2">Reply Status</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-2 py-1 bg-green-800 text-green-200 rounded text-xs">Yes</span>
+                                        <span class="px-2 py-1 bg-red-800 text-red-200 rounded text-xs">No</span>
+                                        <span class="px-2 py-1 bg-yellow-800 text-yellow-200 rounded text-xs">Maybe</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                            <h3 class="text-status-info font-bold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                                <span class="material-symbols-outlined">functions</span> 
+                                <span class="en-text">Key Formulas</span>
+                                <span class="ar-text">المعادلات الرئيسية</span>
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="text-xs text-trygc-lavender mb-1">Daily Reminder:</div>
+                                    <div class="text-[10px] sm:text-xs font-mono bg-trygc-bg p-2 sm:p-3 rounded border border-trygc-border text-green-400 overflow-x-auto">
+                                        =IF(AND(Status="Confirmed", Date=TODAY()), "Send Reminder", "")
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-trygc-lavender mb-1">Completion Rate:</div>
+                                    <div class="text-[10px] sm:text-xs font-mono bg-trygc-bg p-2 sm:p-3 rounded border border-trygc-border text-trygc-peach overflow-x-auto">
+                                        =COUNTIF(Status_Range, "Done") / COUNTIF(Status_Range, "Confirmed")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                            <h3 class="text-trygc-purple font-bold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                                <span class="material-symbols-outlined">rule</span> 
+                                <span class="en-text">Golden Rules</span>
+                                <span class="ar-text">القواعد الذهبية</span>
+                            </h3>
+                            <div class="space-y-2 text-xs sm:text-sm">
+                                ${[
+                                    { en: 'One workbook per campaign — tabs per function', ar: 'ملف واحد لكل حملة — تبويب لكل وظيفة' },
+                                    { en: 'System must always match Sheet data', ar: 'النظام يجب أن يطابق بيانات الشيت دائماً' },
+                                    { en: 'Update Status within 5 minutes of change', ar: 'حدّث الحالة خلال 5 دقائق من التغيير' },
+                                    { en: 'Never delete rows — mark as Cancelled', ar: 'لا تحذف صفوف أبداً — سجلها كـ ملغية' }
+                                ].map(rule => `
+                                    <div class="flex items-start gap-2 p-2 bg-trygc-bg rounded">
+                                        <span class="text-status-success mt-0.5">●</span>
+                                        <div>
+                                            <span class="en-text block text-trygc-offwhite">${rule.en}</span>
+                                            <span class="ar-text block text-trygc-lavender">${rule.ar}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTemplates() {
+            const influencerTemplates = [
+                { 
+                    id: 1, 
+                    scenario: 'Invitation', 
+                    scenarioAr: 'الدعوة',
+                    tags: ['Invite', 'Kickoff'],
+                    en: `Hi {{InfluencerName}},\n\nWe're inviting you to participate in {{CampaignName}} on {{VisitDate}}.\n\nPlease confirm availability so we can share full details.\n\nThank you ����`,
+                    ar: `مرحبًا {{InfluencerName}}،\n\nنحب نشاركك في حملة {{CampaignName}} بتاريخ {{VisitDate}}.\n\nنرجو تأكيد التوفر لإرسال التفاصيل كاملة.\n\nشكرًا 🙏`,
+                    variables: ['InfluencerName', 'CampaignName', 'VisitDate']
+                },
+                {
+                    id: 2,
+                    scenario: 'Reminder #2 (Final)',
+                    scenarioAr: 'تذكير #2 (نهائي)',
+                    tags: ['Reminder', 'Final'],
+                    en: `Hi {{InfluencerName}},\n\nThis is our final reminder regarding {{CampaignName}}.\n\nIf we don't hear back today, we'll proceed with alternatives.\n\nThanks for understanding.`,
+                    ar: `مرحبًا {{InfluencerName}}،\n\nهذا آخر تذكير بخصوص حملة {{CampaignName}}.\n\nفي حال عدم الرد اليوم سنضطر للمتابعة بخيارات أخرى.\n\nشكرًا لتفهمك.`,
+                    variables: ['InfluencerName', 'CampaignName']
+                },
+                {
+                    id: 3,
+                    scenario: 'Missing Coverage',
+                    scenarioAr: 'تغطية مفقودة',
+                    tags: ['Missing', 'Coverage', 'Escalation'],
+                    en: `Hi {{InfluencerName}},\n\nWe noticed the coverage for {{VisitDate}} hasn't been received yet.\n\nPlease share it today to avoid escalation.\n\n{{BriefLink}}`,
+                    ar: `مرحبًا {{InfluencerName}}،\n\nلاحظنا عدم استلام التغطية الخاصة بتاريخ {{VisitDate}}.\n\nنرجو إرسالها اليوم لتفادي التصعيد.\n\n{{BriefLink}}`,
+                    variables: ['InfluencerName', 'VisitDate', 'BriefLink']
+                },
+                {
+                    id: 4,
+                    scenario: 'Confirmation Request',
+                    scenarioAr: 'طلب تأكيد',
+                    tags: ['Confirmation', 'Follow-up'],
+                    en: `Hi {{InfluencerName}},\n\nWe're checking if you're still available for {{CampaignName}} on {{VisitDate}}.\n\nPlease confirm within 24h.`,
+                    ar: `مرحبًا {{InfluencerName}}،\n\nنتحقق من توفرك لحملة {{CampaignName}} بتاريخ {{VisitDate}}.\n\nنرجو التأكيد خلال 24 ساعة.`,
+                    variables: ['InfluencerName', 'CampaignName', 'VisitDate']
+                }
+            ];
+
+            const clientTemplates = [
+                {
+                    id: 1,
+                    scenario: 'Daily Update (Risk)',
+                    scenarioAr: 'تحديث يومي (مخاطر)',
+                    tags: ['Daily', 'Risk', 'Update'],
+                    en: `Hello {{ClientName}},\n\nToday's update for {{CampaignName}}:\n\n⚠️ Risk identified: {{Issue}}\nImpact: {{Impact}}\nDecision needed: {{DecisionNeeded}}\nETA upon approval: {{ETA}}`,
+                    ar: `أهلًا {{ClientName}}،\n\nتحديث اليوم لحملة {{CampaignName}}:\n\n⚠️ خطر قائم: {{Issue}}\nالتأثير: {{Impact}}\nالقرار المطلوب: {{DecisionNeeded}}\nوقت التنفيذ بعد الموافقة: {{ETA}}`,
+                    variables: ['ClientName', 'CampaignName', 'Issue', 'Impact', 'DecisionNeeded', 'ETA']
+                },
+                {
+                    id: 2,
+                    scenario: 'Escalation Notice',
+                    scenarioAr: 'إشعار تصعيد',
+                    tags: ['Escalation', 'Client'],
+                    en: `Hello {{ClientName}},\n\nWe're escalating an issue affecting {{CampaignName}}.\n\nEvidence: {{ProofLink}}\nProposed solution: {{Solution}}\nExpected resolution: {{ETA}}`,
+                    ar: `أهلًا {{ClientName}}،\n\nنرفع لكم مشكلة تؤثر على حملة {{CampaignName}}.\n\nالدليل: {{ProofLink}}\nالحل المقترح: {{Solution}}\nوقت الحل المتوقع: {{ETA}}`,
+                    variables: ['ClientName', 'CampaignName', 'ProofLink', 'Solution', 'ETA']
+                }
+            ];
+
+            return `
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                    <span class="en-text">Templates Library</span>
+                    <span class="ar-text">مكتبة القوالب</span>
+                </h1>
+
+                <!-- Influencer Templates -->
+                <div class="mb-8 sm:mb-12">
+                    <h2 class="text-lg sm:text-xl font-bold text-trygc-orange mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined">person</span>
+                        <span class="en-text">Influencer Communication</span>
+                        <span class="ar-text">التواصل مع المؤثرين</span>
+                    </h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                        ${influencerTemplates.map(t => `
+                            <div class="bg-trygc-card border border-trygc-border rounded-xl overflow-hidden hover:border-trygc-orange transition-all group">
+                                <div class="p-4 sm:p-5 border-b border-trygc-border flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-trygc-orange text-white flex items-center justify-center text-xs font-bold">${t.id}</span>
+                                            <span class="font-bold text-white text-sm sm:text-base">
+                                                <span class="en-text">${t.scenario}</span>
+                                                <span class="ar-text">${t.scenarioAr}</span>
+                                            </span>
+                                        </div>
+                                        <div class="flex gap-2 flex-wrap">
+                                            ${t.tags.map(tag => `<span class="px-2 py-0.5 bg-trygc-surface text-trygc-lavender text-xs rounded">${tag}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 sm:p-5 bg-trygc-bg/30">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs uppercase tracking-widest text-trygc-lavender">English</span>
+                                        <button onclick="copyToClipboard(\`${t.en.replace(/`/g, '\\`')}\`, this)" class="text-trygc-lavender hover:text-white transition-colors p-2 -mr-2">
+                                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <pre class="text-xs sm:text-sm bg-trygc-surface p-3 sm:p-4 rounded border border-trygc-border text-gray-300 whitespace-pre-wrap code-block overflow-x-auto">${t.en.replace(/\{\{(\w+)\}\}/g, '<span class="variable-highlight">{{$1}}</span>')}</pre>
+                                </div>
+
+                                <div class="p-4 sm:p-5 bg-trygc-bg/30 border-t border-trygc-border">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs uppercase tracking-widest text-trygc-lavender">العربية</span>
+                                        <button onclick="copyToClipboard(\`${t.ar.replace(/`/g, '\\`')}\`, this)" class="text-trygc-lavender hover:text-white transition-colors p-2 -mr-2">
+                                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <pre class="text-xs sm:text-sm bg-trygc-surface p-3 sm:p-4 rounded border border-trygc-border text-gray-300 whitespace-pre-wrap code-block font-arabic overflow-x-auto" dir="rtl">${t.ar.replace(/\{\{(\w+)\}\}/g, '<span class="variable-highlight">{{$1}}</span>')}</pre>
+                                </div>
+
+                                <div class="p-4 sm:p-5 border-t border-trygc-border">
+                                    <div class="text-xs text-trygc-lavender mb-2">Variables:</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${t.variables.map(v => `<span class="px-2 py-1 bg-trygc-purple/20 border border-trygc-purple/40 text-trygc-purple rounded text-xs font-mono">{{${v}}}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Client Templates -->
+                <div>
+                    <h2 class="text-lg sm:text-xl font-bold text-trygc-purple mb-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined">business</span>
+                        <span class="en-text">Client Communication</span>
+                        <span class="ar-text">التواصل مع العملاء</span>
+                    </h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                        ${clientTemplates.map(t => `
+                            <div class="bg-trygc-card border border-trygc-border rounded-xl overflow-hidden hover:border-trygc-purple transition-all group">
+                                <div class="p-4 sm:p-5 border-b border-trygc-border flex justify-between items-start">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-trygc-purple text-white flex items-center justify-center text-xs font-bold">${t.id}</span>
+                                            <span class="font-bold text-white text-sm sm:text-base">
+                                                <span class="en-text">${t.scenario}</span>
+                                                <span class="ar-text">${t.scenarioAr}</span>
+                                            </span>
+                                        </div>
+                                        <div class="flex gap-2 flex-wrap">
+                                            ${t.tags.map(tag => `<span class="px-2 py-0.5 bg-trygc-surface text-trygc-lavender text-xs rounded">${tag}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 sm:p-5 bg-trygc-bg/30">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs uppercase tracking-widest text-trygc-lavender">English</span>
+                                        <button onclick="copyToClipboard(\`${t.en.replace(/`/g, '\\`')}\`, this)" class="text-trygc-lavender hover:text-white transition-colors p-2 -mr-2">
+                                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <pre class="text-xs sm:text-sm bg-trygc-surface p-3 sm:p-4 rounded border border-trygc-border text-gray-300 whitespace-pre-wrap code-block overflow-x-auto">${t.en.replace(/\{\{(\w+)\}\}/g, '<span class="variable-highlight">{{$1}}</span>')}</pre>
+                                </div>
+
+                                <div class="p-4 sm:p-5 bg-trygc-bg/30 border-t border-trygc-border">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs uppercase tracking-widest text-trygc-lavender">العربية</span>
+                                        <button onclick="copyToClipboard(\`${t.ar.replace(/`/g, '\\`')}\`, this)" class="text-trygc-lavender hover:text-white transition-colors p-2 -mr-2">
+                                            <span class="material-symbols-outlined text-sm">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <pre class="text-xs sm:text-sm bg-trygc-surface p-3 sm:p-4 rounded border border-trygc-border text-gray-300 whitespace-pre-wrap code-block font-arabic overflow-x-auto" dir="rtl">${t.ar.replace(/\{\{(\w+)\}\}/g, '<span class="variable-highlight">{{$1}}</span>')}</pre>
+                                </div>
+
+                                <div class="p-4 sm:p-5 border-t border-trygc-border">
+                                    <div class="text-xs text-trygc-lavender mb-2">Variables:</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${t.variables.map(v => `<span class="px-2 py-1 bg-trygc-purple/20 border border-trygc-purple/40 text-trygc-purple rounded text-xs font-mono">{{${v}}}</span>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Usage Rules -->
+                <div class="mt-8 sm:mt-12 bg-trygc-card border border-trygc-orange/30 rounded-xl p-4 sm:p-6">
+                    <h3 class="text-trygc-orange font-bold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                        <span class="material-symbols-outlined">rule</span>
+                        <span class="en-text">Usage Rules</span>
+                        <span class="ar-text">قواعد الاستخدام</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                        ${[
+                            { en: 'Always personalize — replace all {{variables}} before sending', ar: 'خصص دائماً — استبدل كل {{المتغيرات}} قبل الإرسال' },
+                            { en: 'Log every sent message with timestamp in tracker', ar: 'سجّل كل رسالة مرسلة بالتاريخ والوقت في المتتبع' },
+                            { en: 'Maximum 10–12 reminders per influencer', ar: 'حد أقصى 10–12 تذكير لكل مؤثر' },
+                            { en: 'Never send spam — messages must be contextual', ar: 'ممنوع السبام — الرسائل يجب أن تكون بسياق' }
+                        ].map(rule => `
+                            <div class="flex items-start gap-2 p-3 bg-trygc-bg rounded">
+                                <span class="text-status-success mt-0.5">●</span>
+                                <div>
+                                    <span class="en-text block text-trygc-offwhite">${rule.en}</span>
+                                    <span class="ar-text block text-trygc-lavender">${rule.ar}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const icon = button.querySelector('.material-symbols-outlined');
+                const originalText = icon.textContent;
+                icon.textContent = 'check';
+                icon.style.color = '#39D98A';
+                setTimeout(() => {
+                    icon.textContent = originalText;
+                    icon.style.color = '';
+                }, 2000);
+            });
+        }
+
+        function renderWorkflows() {
+            return `
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                    <span class="en-text">E2E Campaign Workflow</span>
+                    <span class="ar-text">سير عمل الحملة الكامل</span>
+                </h1>
+
+                <div class="bg-white rounded-xl p-4 sm:p-8 mb-6 sm:mb-8 overflow-x-auto">
+                    <div class="workflow-mobile">
+                        <div class="flex items-center justify-between mb-8">
+                            ${['Intake', 'Setup', 'Invite', 'Execute', 'Coverage QA', 'Fix Gaps', 'Report'].map((phase, i) => `
+                                <div class="flex flex-col items-center flex-1">
+                                    <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full ${i === 0 ? 'bg-trygc-purple' : i < 2 ? 'bg-trygc-orange' : i < 4 ? 'bg-blue-500' : i < 6 ? 'bg-green-600' : 'bg-trygc-purple'} text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-lg">
+                                        ${i + 1}
+                                    </div>
+                                    <div class="text-[10px] sm:text-xs font-bold text-gray-700 mt-2 text-center">${phase}</div>
+                                    ${i < 6 ? '<div class="text-gray-400 text-lg sm:text-xl mt-2">→</div>' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    ${[
+                        { team: 'Community', icon: 'groups', color: 'purple', tasks: ['Define Goals', 'Source Influencers', 'Create Booking Order', 'Client Approval'] },
+                        { team: 'Coordination', icon: 'hub', color: 'orange', tasks: ['Create Folders', 'Setup Sheets', 'System Entry', 'Data Validation'] },
+                        { team: 'Chat', icon: 'chat', color: 'blue-500', tasks: ['Send Invitations', 'Log Replies', 'Send Brief', 'Live Support'] },
+                        { team: 'Follow-Up', icon: 'schedule', color: 'yellow-600', tasks: ['Morning Reminders', 'Track Visits', 'Resolve Issues', 'EOD Updates'] },
+                        { team: 'Coverage', icon: 'visibility', color: 'green-600', tasks: ['Download Proofs', 'QA vs Brief', 'pCloud Archive', 'Mark Done'] },
+                        { team: 'Ops Lead', icon: 'shield', color: 'purple', tasks: ['Oversight', 'Risk Management', 'Escalation', 'Final Approval'] }
+                    ].map(team => `
+                        <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-lg bg-${team.color} flex items-center justify-center text-white">
+                                    <span class="material-symbols-outlined text-xl">${team.icon}</span>
+                                </div>
+                                <h3 class="font-bold text-white text-sm sm:text-base">${team.team}</h3>
+                            </div>
+                            <ul class="space-y-2 text-xs sm:text-sm">
+                                ${team.tasks.map(task => `
+                                    <li class="flex items-start gap-2 text-trygc-lavender">
+                                        <span class="text-${team.color} mt-1">●</span>
+                                        ${task}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderKPIs() {
+            return `
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                    <span class="en-text">KPIs & SLAs Dashboard</span>
+                    <span class="ar-text">لوحة المؤشرات والـ SLAs</span>
+                </h1>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                    ${[
+                        { icon: 'check_circle', value: '98.5%', label: 'SLA Compliance', labelAr: 'الامتثال للـ SLA', trend: '+2.3%', color: 'success' },
+                        { icon: 'schedule', value: '3.2h', label: 'Avg Response Time', labelAr: 'متوسط وقت الاستجابة', trend: '-15%', color: 'purple' },
+                        { icon: 'groups', value: '156', label: 'Active Influencers', labelAr: 'المؤثرون النشطون', trend: '+8%', color: 'orange' },
+                        { icon: 'star', value: '94%', label: 'Quality Score', labelAr: 'درجة الجودة', trend: '+1.5%', color: 'info' }
+                    ].map(kpi => `
+                        <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                            <div class="flex justify-between items-start mb-3 sm:mb-4">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-status-${kpi.color}/20 flex items-center justify-center text-status-${kpi.color}">
+                                    <span class="material-symbols-outlined text-xl sm:text-2xl">${kpi.icon}</span>
+                                </div>
+                                <span class="text-xs font-bold text-status-${kpi.color}">${kpi.trend}</span>
+                            </div>
+                            <div class="text-2xl sm:text-3xl font-bold text-white mb-1">${kpi.value}</div>
+                            <div class="text-xs sm:text-sm text-trygc-lavender">
+                                <span class="en-text">${kpi.label}</span>
+                                <span class="ar-text">${kpi.labelAr}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                    <h2 class="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6">
+                        <span class="en-text">Service Level Agreements</span>
+                        <span class="ar-text">اتفاقيات مستوى الخدمة</span>
+                    </h2>
+                    <div class="table-responsive">
+                        <table class="w-full text-xs sm:text-sm">
+                            <thead class="bg-trygc-deep text-white">
+                                <tr>
+                                    <th class="p-2 sm:p-3 text-left">Operation</th>
+                                    <th class="p-2 sm:p-3 text-left">Target SLA</th>
+                                    <th class="p-2 sm:p-3 text-left">Current Avg</th>
+                                    <th class="p-2 sm:p-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-trygc-border">
+                                ${[
+                                    { op: 'Client Response', target: '≤2 hours', current: '1.8 hours', status: 'On Track', rag: 'success' },
+                                    { op: 'Influencer Invitation', target: '≤24 hours', current: '18 hours', status: 'On Track', rag: 'success' },
+                                    { op: 'Campaign Setup', target: '≤4 hours', current: '3.5 hours', status: 'On Track', rag: 'success' },
+                                    { op: 'Coverage QA Review', target: 'Same Day', current: '6 hours', status: 'Excellent', rag: 'success' },
+                                    { op: 'Missing Content Follow-up', target: '≤24 hours', current: '22 hours', status: 'At Risk', rag: 'warning' },
+                                    { op: 'Final Report Delivery', target: '24–48 hours', current: '36 hours', status: 'On Track', rag: 'success' }
+                                ].map(row => `
+                                    <tr class="hover:bg-trygc-surface transition-colors">
+                                        <td class="p-2 sm:p-3 text-trygc-offwhite font-medium">${row.op}</td>
+                                        <td class="p-2 sm:p-3 text-trygc-lavender">${row.target}</td>
+                                        <td class="p-2 sm:p-3 text-trygc-lavender">${row.current}</td>
+                                        <td class="p-2 sm:p-3 text-center">
+                                            <span class="px-2 sm:px-3 py-1 rounded-full text-xs font-bold bg-status-${row.rag}/20 text-status-${row.rag}">${row.status}</span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderComponents() {
+            return `
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">
+                    <span class="en-text">Design System Components</span>
+                    <span class="ar-text">مكونات نظام التصميم</span>
+                </h1>
+
+                <div class="space-y-6 sm:space-y-8">
+                    <!-- Colors -->
+                    <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-white mb-4">Brand Colors</h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            ${[
+                                { name: 'Purple', hex: '#52358C', var: 'trygc-purple' },
+                                { name: 'Orange', hex: '#E8630C', var: 'trygc-orange' },
+                                { name: 'Lavender', hex: '#A798BF', var: 'trygc-lavender' },
+                                { name: 'Peach', hex: '#E3A579', var: 'trygc-peach' }
+                            ].map(color => `
+                                <div class="flex flex-col gap-2">
+                                    <div class="h-16 sm:h-20 rounded-lg bg-${color.var} border border-trygc-border"></div>
+                                    <div class="text-sm">
+                                        <div class="font-bold text-white">${color.name}</div>
+                                        <div class="text-xs text-trygc-lavender font-mono">${color.hex}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Typography -->
+                    <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-white mb-4">Typography</h2>
+                        <div class="space-y-4">
+                            <div class="text-2xl sm:text-4xl font-bold text-white">Heading 1 — Inter</div>
+                            <div class="text-xl sm:text-3xl font-bold text-white">Heading 2 — Inter</div>
+                            <div class="text-lg sm:text-xl font-bold text-white">Heading 3 — Inter</div>
+                            <div class="text-sm sm:text-base text-trygc-offwhite">Body Text — Inter Regular</div>
+                            <div class="text-2xl sm:text-4xl font-arabic text-white">عنوان بالعربية — Noto Kufi Arabic</div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-white mb-4">Buttons</h2>
+                        <div class="flex flex-wrap gap-4">
+                            <button class="px-4 py-2 bg-trygc-orange text-white rounded-lg font-bold hover:bg-orange-600 transition-colors text-sm sm:text-base">Primary</button>
+                            <button class="px-4 py-2 bg-trygc-purple text-white rounded-lg font-bold hover:bg-purple-700 transition-colors text-sm sm:text-base">Secondary</button>
+                            <button class="px-4 py-2 bg-trygc-surface border border-trygc-border text-white rounded-lg font-bold hover:bg-trygc-card transition-colors text-sm sm:text-base">Ghost</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSOP(id) {
+            // Comprehensive SOP data
+            const sops = {
+                'sop_community': {
+                    titleEn: 'Community Operations SOP',
+                    titleAr: 'إجراءات عمليات الكوميونيتي',
+                    icon: 'groups',
+                    owner: 'Community Lead',
+                    purpose: {
+                        en: 'The Community team owns the relationship lifecycle from sourcing influencers to delivering final campaign reports. Every action must be documented, every commitment tracked, and every deliverable verified against the client brief.',
+                        ar: 'فريق الكوميونيتي يملك دورة العلاقة من اختيار المؤثرين إلى تسليم تقارير الحملة النهائية. كل إجراء يجب توثيقه، كل التزام يُتتبع، وكل مخرج يُتحقق منه مقابل برِيف العميل.'
+                    },
+                    steps: [
+                        {
+                            number: '01',
+                            titleEn: 'Define Client Goals & Campaign Scope',
+                            titleAr: 'تحديد أهداف العميل ونطاق الحملة',
+                            descEn: 'Meet with the client to define campaign objectives, target audience, deliverables, timeline, and budget. Document everything in a Meeting Minutes (MOM) document.',
+                            descAr: 'اجتمع مع العميل لتحديد أهداف الحملة، الجمهور المستهدف، المخرجات، الجدول الزمني، والميزانية. وثّق كل شيء في محضر اجتماع.',
+                            preconditionsEn: 'Client contract signed, budget approved',
+                            preconditionsAr: 'عقد العميل موقّع، الميزانية معتمدة',
+                            sla: '≤48h',
+                            evidenceEn: 'MOM document with signatures, campaign brief PDF',
+                            evidenceAr: 'محضر اجتماع بتواقيع، PDF برِيف الحملة'
+                        },
+                        {
+                            number: '02',
+                            titleEn: 'Source & Build Influencer List',
+                            titleAr: 'اختيار وبناء قائمة المؤثرين',
+                            descEn: 'Source influencers matching campaign criteria. Build a list with username, platform, follower count, engagement rate, location, content niche, and contact info.',
+                            descAr: 'اختر مؤثرين مطابقين لمعايير الحملة. ابنِ قائمة تتضمن: اليوزرنيم، المنصة، عدد المتابعين، معدل التفاعل، الموقع، النيتش، معلومات التواصل.',
+                            preconditionsEn: 'Campaign brief approved',
+                            preconditionsAr: 'برِيف الحملة معتمد',
+                            sla: '≤48h',
+                            evidenceEn: 'Google Sheet with People_List tab',
+                            evidenceAr: 'جوجل شيت بتبويب People_List'
+                        },
+                        {
+                            number: '03',
+                            titleEn: 'Client Approval & Booking Order',
+                            titleAr: 'موافقة العميل وأمر الحجز',
+                            descEn: 'Get client sign-off on the final influencer list. Create a Booking Order document with campaign name, dates, influencer list, deliverables per influencer, and total budget breakdown.',
+                            descAr: 'احصل على موافقة العميل على القائمة النهائية. أنشئ أمر حجز يتضمن: اسم الحملة، التواريخ، قائمة المؤثرين، المخرجات لكل مؤثر، تفصيل الميزانية.',
+                            preconditionsEn: 'Influencer list approved by client',
+                            preconditionsAr: 'قائمة المؤثرين معتمدة من العميل',
+                            sla: 'Same day',
+                            evidenceEn: 'Booking Order document, client approval email',
+                            evidenceAr: 'مستند أمر الحجز، إيميل موافقة العميل'
+                        },
+                        {
+                            number: '04',
+                            titleEn: 'Track Campaign Targets',
+                            titleAr: 'متابعة أهداف الحملة',
+                            descEn: 'Monitor daily progress against campaign targets. Track invitations sent vs target, confirmations vs target, visits completed, and coverage collected.',
+                            descAr: 'تابع التقدم اليومي مقابل أهداف الحملة. تتبع: الدعوات المرسلة مقابل الهدف، التأكيدات، الزيارات المكتملة، التغطية المجمّعة.',
+                            preconditionsEn: 'Campaign launched',
+                            preconditionsAr: 'الحملة مطلقة',
+                            sla: 'Daily EOD',
+                            evidenceEn: 'Updated trackers, risk log entries',
+                            evidenceAr: 'متتبعات محدّثة، إدخالات سجل المخاطر'
+                        },
+                        {
+                            number: '05',
+                            titleEn: 'Daily Client Updates',
+                            titleAr: 'التحديثات اليومية للعميل',
+                            descEn: 'Send a daily status update to the client covering: today\'s completed visits, coverage collected, any issues/risks, and decisions needed.',
+                            descAr: 'أرسل تحديث حالة يومي للعميل يغطي: زيارات اليوم المكتملة، التغطية المجمّعة، أي مشاكل/مخاطر، قرارات مطلوبة.',
+                            preconditionsEn: 'Campaign active',
+                            preconditionsAr: 'الحملة نشطة',
+                            sla: 'Before EOD',
+                            evidenceEn: 'Sent messages with timestamps, Client_Comm_Log',
+                            evidenceAr: 'رسائل مرسلة بالتاريخ والوقت، Client_Comm_Log'
+                        }
+                    ]
+                },
+                'sop_coordination': {
+                    titleEn: 'Coordination Hub SOP',
+                    titleAr: 'إجراءات مركز التنسيق',
+                    icon: 'hub',
+                    owner: 'Coordination Lead',
+                    purpose: {
+                        en: 'Coordination owns campaign infrastructure: folders, sheets, system entries, and data integrity. They are the operational backbone ensuring all systems stay synchronized.',
+                        ar: 'التنسيق يملك البنية التحتية للحملة: الفولدرات، الشي��ات، إدخالات النظام، وسلامة البيانات. هم العمود الفقري التشغيلي لضمان تزامن كل الأنظمة.'
+                    },
+                    steps: [
+                        {
+                            number: '01',
+                            titleEn: 'Validate Booking Order',
+                            titleAr: 'التحقق من أمر الحجز',
+                            descEn: 'Receive Booking Order from Community. Validate all fields are complete: campaign name, dates, budget, influencer count, deliverables.',
+                            descAr: 'استلم أمر الحجز من الكوميونيتي. تحقق من كل الحقول مكتملة: اسم الحملة، التواريخ، الميزانية، عدد المؤثرين، المخرجات.',
+                            preconditionsEn: 'Booking Order received from Community',
+                            preconditionsAr: 'أمر الحجز مستلم من الكوميونيتي',
+                            sla: '≤30min',
+                            evidenceEn: 'Validated BO document',
+                            evidenceAr: 'مستند أمر حجز متحقق منه'
+                        },
+                        {
+                            number: '02',
+                            titleEn: 'Create Dropbox Folder Structure',
+                            titleAr: 'إنشاء هيكل فولدرات دروب بوكس',
+                            descEn: 'Create campaign folder following naming convention: Company > Brand+Country > YYYY > MM_YYYY_CampaignType. Include subfolders: Brief, MOM, Reports.',
+                            descAr: 'أنشئ فولدر الحملة بالتسمية الموحدة: الشركة > البراند+البلد > YYYY > MM_YYYY_نوع_الحملة. ضمّن فولدرات فرعية: البريف، المحاضر، التقارير.',
+                            preconditionsEn: 'BO validated',
+                            preconditionsAr: 'أمر الحجز متحقق منه',
+                            sla: '≤1h',
+                            evidenceEn: 'Folder path shared with team',
+                            evidenceAr: 'مسار الفولدر مشارك مع الفريق'
+                        },
+                        {
+                            number: '03',
+                            titleEn: 'Setup Google Sheets',
+                            titleAr: 'تجهيز جوجل شيتس',
+                            descEn: 'Create Master Campaign Sheet with tabs: Cam_Info, Influencer_List, Missing_Need_Tracker, Daily_Plan, Coverage_QA. Apply data validations and formulas.',
+                            descAr: 'أنشئ ملف الحملة الرئيسي بالتبويبات: Cam_Info، Influencer_List، Missing_Need_Tracker، Daily_Plan، Coverage_QA. طبّق التحققات والمعادلات.',
+                            preconditionsEn: 'Folder created',
+                            preconditionsAr: 'الفولدر منشأ',
+                            sla: '≤2h',
+                            evidenceEn: 'Sheet link shared, formulas working',
+                            evidenceAr: 'رابط الشيت مشارك، المعادلات تعمل'
+                        },
+                        {
+                            number: '04',
+                            titleEn: 'System Entry & Validation',
+                            titleAr: 'إدخال النظام والتحقق',
+                            descEn: 'Enter all campaign data into the System/Dashboard. Verify System matches Sheet data exactly. Run reconciliation check.',
+                            descAr: 'أدخل كل بيانات الحملة في النظام/لوحة القيادة. تحقق من مطابقة النظام لبيانات الشيت بالضبط. شغّل فحص المطابقة.',
+                            preconditionsEn: 'Sheet completed',
+                            preconditionsAr: 'الشيت مكتمل',
+                            sla: '≤1h',
+                            evidenceEn: 'System entry screenshot, reconciliation report',
+                            evidenceAr: 'لقطة شاشة إدخال النظام، تقرير المطابقة'
+                        },
+                        {
+                            number: '05',
+                            titleEn: 'Daily Governance',
+                            titleAr: 'الحوكمة اليومية',
+                            descEn: 'Daily system-sheet reconciliation. Check for mismatches in Status, Dates, Coverage links. Update discrepancies within 5 minutes.',
+                            descAr: 'مطابقة يومية بين النظام والشيت. افحص عدم التطابق في الحالة، التواريخ، روابط التغطية. حدّث التناقضات خلال 5 دقائق.',
+                            preconditionsEn: 'Campaign active',
+                            preconditionsAr: 'الحملة نشطة',
+                            sla: 'Daily EOD',
+                            evidenceEn: 'Reconciliation log',
+                            evidenceAr: 'سجل المطابقة'
+                        }
+                    ]
+                },
+                'sop_chat': {
+                    titleEn: 'Chat & WhatsApp SOP',
+                    titleAr: 'إجراءات الشات والواتساب',
+                    icon: 'chat',
+                    owner: 'Chat Team Lead',
+                    purpose: {
+                        en: 'Chat team manages all influencer communication: invitations, reply logging, reminders, and brief sending. Every message must be contextual and logged.',
+                        ar: 'فريق الشات يدير كل التواصل مع المؤثرين: الدعوات، تسجيل الردود، التذكيرات، إرسال البريف. كل رسالة يجب أن تكون بسياق ومسجّلة.'
+                    },
+                    steps: [
+                        {
+                            number: '01',
+                            titleEn: 'Send Contextual Invitations',
+                            titleAr: 'إرسال دعوات بسياق',
+                            descEn: 'Send personalized invitations using approved templates. Include influencer name, campaign name, and visit date. Never send generic spam messages.',
+                            descAr: 'أرسل دعوات مخصصة باستخدام القوالب المعتمدة. ضمّن اسم المؤثر، اسم الحملة، تاريخ الزيارة. ممنوع إرسال رسائل سبام عامة.',
+                            preconditionsEn: 'Influencer list approved, campaign setup complete',
+                            preconditionsAr: 'قائمة المؤثرين معتمدة، إعداد الحملة مكتمل',
+                            sla: '≤24h from setup',
+                            evidenceEn: 'Invite log with timestamps',
+                            evidenceAr: 'سجل الدعوات بالتاريخ والوقت'
+                        },
+                        {
+                            number: '02',
+                            titleEn: 'Log Replies Immediately',
+                            titleAr: 'تسجيل الردود فوراً',
+                            descEn: 'Mark reply status in Sheet within 5 minutes: Yes/No/Maybe. Include timestamp and any special notes from influencer.',
+                            descAr: 'سجل حالة الرد في الشيت خلال 5 دقائق: نعم/لا/ممكن. ضمّن التاريخ والوقت وأي ملاحظات خاصة من المؤثر.',
+                            preconditionsEn: 'Invitation sent',
+                            preconditionsAr: 'الدعوة مرسلة',
+                            sla: '≤5min',
+                            evidenceEn: 'Updated Reply_Status in Sheet',
+                            evidenceAr: 'Reply_Status محدّث في الشيت'
+                        },
+                        {
+                            number: '03',
+                            titleEn: 'Send Brief (24h Before Visit)',
+                            titleAr: 'إرسال البريف (قبل 24 ساعة)',
+                            descEn: 'Send complete brief with QR code, location, timing, deliverables, and brand guidelines. Confirm influencer acknowledges receipt.',
+                            descAr: 'أرسل البريف الكامل مع كود QR، الموقع، التوقيت، المخرجات، إرشادات البراند. تأكد من استلام المؤثر.',
+                            preconditionsEn: 'Influencer confirmed (Status = Confirmed)',
+                            preconditionsAr: 'المؤثر أكّد (الحالة = مؤكد)',
+                            sla: '24h before visit',
+                            evidenceEn: 'Brief sent timestamp, read receipt',
+                            evidenceAr: 'طابع زمني للبريف، إشعار القراءة'
+                        },
+                        {
+                            number: '04',
+                            titleEn: 'Live Support During Visit',
+                            titleAr: 'الدعم المباشر أثناء الزيارة',
+                            descEn: 'Be available on WhatsApp during visit hours. Respond to questions within 5 minutes. Troubleshoot issues (location, QR code, brief confusion).',
+                            descAr: 'كن متاحاً على الواتساب أثناء ساعات الزيارة. رد على الأسئلة خلال 5 دقائق. حل المشاكل (الموقع، كود QR، اللبس في البريف).',
+                            preconditionsEn: 'Visit day active',
+                            preconditionsAr: 'يوم الزيارة نشط',
+                            sla: '≤5min response',
+                            evidenceEn: 'Support log with timestamps',
+                            evidenceAr: 'سجل الدعم بالتاريخ والوقت'
+                        }
+                    ]
+                },
+                'sop_followup': {
+                    titleEn: 'Follow-Up System SOP',
+                    titleAr: 'إجراءات نظام المتابعة',
+                    icon: 'schedule',
+                    owner: 'Follow-Up Lead',
+                    purpose: {
+                        en: 'Follow-Up team ensures visits happen on schedule through systematic reminders and issue resolution. Maximum 10-12 reminders per influencer.',
+                        ar: 'فريق المتابعة يضمن حدوث الزيارات في الموعد من خلال تذكيرات منهجية وحل المشاكل. حد أقصى 10-12 تذكير لكل مؤثر.'
+                    },
+                    steps: [
+                        {
+                            number: '01',
+                            titleEn: 'Morning Reminders (Today\'s Visits)',
+                            titleAr: 'تذكيرات الصباح (زيارات اليوم)',
+                            descEn: 'At 10 AM, send reminder to all confirmed influencers visiting today. Include: visit time, location, QR code, and support contact.',
+                            descAr: 'الساعة 10 صباحاً، أرسل تذكير لكل المؤثرين المؤكدين للزيارة اليوم. ضمّن: وقت الزيارة، الموقع، كود QR، جهة التواصل.',
+                            preconditionsEn: 'Status = Confirmed, Date = Today',
+                            preconditionsAr: 'الحالة = مؤكد، التاريخ = اليوم',
+                            sla: '10:00 AM daily',
+                            evidenceEn: 'Reminder log, delivery receipts',
+                            evidenceAr: 'سجل التذكيرات، إشعارات التسليم'
+                        },
+                        {
+                            number: '02',
+                            titleEn: 'Track Missing & Need',
+                            titleAr: 'تتبع الناقص والتعديل',
+                            descEn: 'Monitor Missing (no show) and Need (requires changes) statuses. Log in Missing_Need_Tracker with influencer name, issue type, owner, and resolution status.',
+                            descAr: 'راقب حالات الناقص (عدم الحضور) والتعديل (يحتاج تغييرات). سجّل في Missing_Need_Tracker باسم المؤثر، نوع المشكلة، المالك، حالة الحل.',
+                            preconditionsEn: 'Visit day passed',
+                            preconditionsAr: 'يوم الزيارة مضى',
+                            sla: 'Same day',
+                            evidenceEn: 'Missing_Need_Tracker entries',
+                            evidenceAr: 'إدخالات Missing_Need_Tracker'
+                        },
+                        {
+                            number: '03',
+                            titleEn: 'Resolution & Rescheduling',
+                            titleAr: 'الحل وإعادة الجدولة',
+                            descEn: 'For Missing cases: call influencer, identify reason, reschedule if possible. For Need cases: coordinate with relevant team to fix issue.',
+                            descAr: 'لحالات الناقص: اتصل بالمؤثر، حدد السبب، أعد الجدولة إن أمكن. لحالات التعديل: نسّق مع الفريق المعني لحل المشكلة.',
+                            preconditionsEn: 'Issue identified',
+                            preconditionsAr: 'المشكلة محددة',
+                            sla: '≤24h',
+                            evidenceEn: 'Resolution notes, new date confirmed',
+                            evidenceAr: 'ملاحظات الحل، تاريخ جديد مؤكد'
+                        },
+                        {
+                            number: '04',
+                            titleEn: 'EOD Status Update',
+                            titleAr: 'تحديث الحالة نهاية اليوم',
+                            descEn: 'Update all relevant statuses in Sheet by EOD. Share summary with Ops Lead: completed visits, pending issues, escalations needed.',
+                            descAr: 'حدّث كل الحالات المعنية في الشيت قبل نهاية اليوم. شارك ملخص مع قائد العمليات: الزيارات المكتملة، المشاكل المعلّقة، التصعيدات المطلوبة.',
+                            preconditionsEn: 'Daily operations complete',
+                            preconditionsAr: 'العمليات اليومية مكتملة',
+                            sla: 'Before EOD',
+                            evidenceEn: 'EOD summary report',
+                            evidenceAr: 'تقرير ملخص نهاية اليوم'
+                        }
+                    ]
+                },
+                'sop_coverage': {
+                    titleEn: 'Coverage & QA SOP',
+                    titleAr: 'إجراءات التغطية وضمان الجودة',
+                    icon: 'visibility',
+                    owner: 'Coverage Lead',
+                    purpose: {
+                        en: 'Coverage team validates all influencer content against the brief, downloads proofs, archives to pCloud, and ensures Done reconciliation with System.',
+                        ar: 'فريق التغطية يتحقق من كل محتوى المؤثرين مقابل البريف، يحمّل الإثباتات، يؤرشف في pCloud، ويضمن مطابقة حالة تم مع النظام.'
+                    },
+                    steps: [
+                        {
+                            number: '01',
+                            titleEn: 'Download Coverage Proofs',
+                            titleAr: 'تحميل إثباتات التغطية',
+                            descEn: 'Download all influencer stories/posts/reels. Save to pCloud with folder naming: Username_YYYYMMDD. Include screenshots of analytics if required.',
+                            descAr: 'حمّل كل ستوريات/بوستات/ريلز المؤثرين. احفظ في pCloud بتسمية الفولدر: Username_YYYYMMDD. ضمّن لقطات شاشة للإحصائيات إن كانت مطلوبة.',
+                            preconditionsEn: 'Content posted by influencer',
+                            preconditionsAr: 'المحتوى منشور من المؤثر',
+                            sla: 'Same day',
+                            evidenceEn: 'pCloud folder link',
+                            evidenceAr: 'رابط فولدر pCloud'
+                        },
+                        {
+                            number: '02',
+                            titleEn: 'QA vs Brief Compliance',
+                            titleAr: 'فحص الجودة مقابل البريف',
+                            descEn: 'Check content against brief requirements: correct location tag, brand mention, required hashtags, deliverable type (story/reel/post), timing.',
+                            descAr: 'افحص المحتوى مقابل متطلبات البريف: تاغ الموقع الصحيح، ذكر البراند، الهاشتاغات المطلوبة، نوع المخرج (ستوري/ريل/بوست)، التوقيت.',
+                            preconditionsEn: 'Proof downloaded',
+                            preconditionsAr: 'الإثبات محمّل',
+                            sla: '≤2h',
+                            evidenceEn: 'QA checklist, pass/fail status',
+                            evidenceAr: 'قائمة فحص الجودة، حالة نجح/فشل'
+                        },
+                        {
+                            number: '03',
+                            titleEn: 'Reject & Request Fix',
+                            titleAr: 'الرفض وطلب الإصلاح',
+                            descEn: 'If content fails QA: mark as Need in Sheet, notify influencer immediately with specific fix required. Set deadline for resubmission.',
+                            descAr: 'لو المحتوى فشل الفحص: سجله كـ تعديل في الشيت، أبلغ المؤثر فوراً بالإصلاح المطلوب بالتحديد. حدد موعد نهائي لإعادة التقديم.',
+                            preconditionsEn: 'QA failed',
+                            preconditionsAr: 'فحص الجودة فشل',
+                            sla: '≤30min',
+                            evidenceEn: 'Rejection message, fix request',
+                            evidenceAr: 'رسالة رفض، طلب إصلاح'
+                        },
+                        {
+                            number: '04',
+                            titleEn: 'Mark Done & Reconcile',
+                            titleAr: 'تسجيل تم والمطابقة',
+                            descEn: 'Once content passes QA: mark Status = Done in Sheet, add pCloud link. Coordination team verifies System matches Sheet for reconciliation.',
+                            descAr: 'بمجرد نجاح المحتوى: سجل الحالة = تم في الشيت، أضف رابط pCloud. فريق التنسيق يتحقق من مطابقة النظام للشيت.',
+                            preconditionsEn: 'QA passed',
+                            preconditionsAr: 'فحص الجودة نجح',
+                            sla: '≤15min',
+                            evidenceEn: 'Done status + pCloud link in Sheet',
+                            evidenceAr: 'حالة تم + رابط pCloud في الشيت'
+                        }
+                    ]
+                }
+            };
+
+            const data = sops[id] || sops['sop_community'];
+
+            return `
+                <div class="mb-6 sm:mb-8 border-b border-trygc-border pb-4 sm:pb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-trygc-orange flex items-center justify-center text-white">
+                            <span class="material-symbols-outlined text-xl sm:text-2xl">${data.icon}</span>
+                        </div>
+                        <div>
+                            <div class="text-[10px] sm:text-xs text-trygc-orange font-bold uppercase tracking-widest mb-1">Standard Operating Procedure</div>
+                            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-white">
+                                <span class="en-text">${data.titleEn}</span>
+                                <span class="ar-text">${data.titleAr}</span>
+                            </h1>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-trygc-card border border-trygc-border rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+                        <h3 class="text-xs sm:text-sm font-bold text-trygc-lavender uppercase tracking-widest mb-2">
+                            <span class="en-text">Purpose</span>
+                            <span class="ar-text">الهدف</span>
+                        </h3>
+                        <p class="text-sm sm:text-base text-trygc-offwhite leading-relaxed">
+                            <span class="en-text">${data.purpose.en}</span>
+                            <span class="ar-text">${data.purpose.ar}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 sm:space-y-6">
+                    ${data.steps.map(step => `
+                        <div class="bg-trygc-card border border-trygc-border rounded-xl overflow-hidden hover:border-trygc-orange transition-all group">
+                            <div class="flex gap-3 sm:gap-6 p-4 sm:p-6">
+                                <div class="text-4xl sm:text-6xl font-black text-trygc-border/30 group-hover:text-trygc-orange/30 transition-colors">${step.number}</div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-3 group-hover:text-trygc-orange transition-colors">
+                                        <span class="en-text">${step.titleEn}</span>
+                                        <span class="ar-text">${step.titleAr}</span>
+                                    </h3>
+                                    
+                                    <div class="bg-trygc-bg p-3 sm:p-4 rounded-lg border border-trygc-border mb-3 sm:mb-4">
+                                        <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                                            <span class="en-text">${step.descEn}</span>
+                                            <span class="ar-text">${step.descAr}</span>
+                                        </p>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
+                                        <div class="bg-trygc-surface p-3 rounded border border-trygc-border">
+                                            <div class="text-[10px] sm:text-xs text-trygc-lavender uppercase tracking-widest mb-1">
+                                                <span class="en-text">Preconditions</span>
+                                                <span class="ar-text">الشروط المسبقة</span>
+                                            </div>
+                                            <div class="text-trygc-offwhite">
+                                                <span class="en-text">${step.preconditionsEn}</span>
+                                                <span class="ar-text">${step.preconditionsAr}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="bg-trygc-surface p-3 rounded border border-trygc-border">
+                                            <div class="text-[10px] sm:text-xs text-trygc-lavender uppercase tracking-widest mb-1">
+                                                <span class="en-text">SLA</span>
+                                                <span class="ar-text">الوقت المستهدف</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-status-success text-sm">schedule</span>
+                                                <span class="font-bold text-white">${step.sla}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="sm:col-span-2 bg-trygc-surface p-3 rounded border border-trygc-border">
+                                            <div class="text-[10px] sm:text-xs text-trygc-lavender uppercase tracking-widest mb-1">
+                                                <span class="en-text">Evidence Required</span>
+                                                <span class="ar-text">الأدلة المطلوبة</span>
+                                            </div>
+                                            <div class="text-trygc-offwhite">
+                                                <span class="en-text">${step.evidenceEn}</span>
+                                                <span class="ar-text">${step.evidenceAr}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Non-Negotiables Footer -->
+                <div class="mt-8 sm:mt-12 bg-trygc-card border border-trygc-orange/30 rounded-xl p-4 sm:p-6">
+                    <h3 class="text-trygc-orange font-bold mb-4 flex items-center gap-2 text-sm sm:text-base">
+                        <span class="material-symbols-outlined">shield</span>
+                        <span class="en-text">Non-Negotiable Rules</span>
+                        <span class="ar-text">قواعد غير قابلة للتفاوض</span>
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                        ${[
+                            { en: 'All changes must be documented in Sheet within 5 minutes', ar: 'كل التغييرات يجب توثيقها في الشيت خلال 5 دقائق' },
+                            { en: 'System must always match Sheet data', ar: 'النظام يجب أن يطابق بيانات الشيت دائماً' },
+                            { en: 'Escalate risks within 2 hours of identification', ar: 'صعّد المخاطر خلال ساعتين من اكتشافها' },
+                            { en: 'Never delete data — mark as Cancelled', ar: 'لا تحذف البيانات أبداً — سجلها كـ ملغية' }
+                        ].map(rule => `
+                            <div class="flex items-start gap-2 p-3 bg-trygc-bg rounded">
+                                <span class="text-status-success mt-0.5">●</span>
+                                <div>
+                                    <span class="en-text block text-trygc-offwhite">${rule.en}</span>
+                                    <span class="ar-text block text-trygc-lavender">${rule.ar}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+    </script>
+
+</body>
+</html>
