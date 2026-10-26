@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import {
   BookOpen,
   Compass,
@@ -928,6 +929,7 @@ function App() {
           background: linear-gradient(140deg, ${TRYGC.purple} 0%, ${TRYGC.purpleDark} 62%, ${TRYGC.orange} 160%);
         }
       `}</style>
+      <Analytics />
     </div>
   );
 }
