@@ -196,11 +196,11 @@ export function InfluencerTemplatesPage({ mode }: { mode: LangMode }) {
     <div className="space-y-6">
       <PageMeta
         mode={mode}
-        owner={{ en: "Chat Team Lead", ar: "قائد فريق الشات" }}
+        owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }}
         approver={{ en: "Operations Lead", ar: "قائد العمليات" }}
         version="3.0"
-        lastUpdated="2026-02-06"
-        nextReview="2026-03-06"
+        lastUpdated="2026-09-15"
+        nextReview="2027-03-15"
       />
       <H
         title={{ en: "Influencer Communication Templates", ar: "قوالب التواصل مع المؤثرين" }}
@@ -244,11 +244,11 @@ export function ClientTemplatesPage({ mode }: { mode: LangMode }) {
     <div className="space-y-6">
       <PageMeta
         mode={mode}
-        owner={{ en: "Community Lead", ar: "قائد الكوميونيتي" }}
+        owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }}
         approver={{ en: "Operations Lead", ar: "قائد العمليات" }}
         version="3.0"
-        lastUpdated="2026-02-06"
-        nextReview="2026-03-06"
+        lastUpdated="2026-09-15"
+        nextReview="2027-03-15"
       />
       <H
         title={{ en: "Client Communication Templates", ar: "قوالب التواصل مع العملاء" }}

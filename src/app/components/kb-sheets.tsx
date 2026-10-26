@@ -29,7 +29,7 @@ const VALIDATIONS = [
 export function GSheetsPage({ mode }: { mode: LangMode }) {
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Coordination Lead", ar: "قائد التنسيق" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "05 — GSheets Blueprint (Workbook Structure)", ar: "05 — هيكلة جوجل شيتس (هيكلة الملف)" }} mode={mode}
         subtitle={{ en: "Complete data model with tabs, columns, validations, and SLA logic", ar: "نموذج بيانات كامل بالتبويبات والأعمدة والتحققات ومنطق SLA" }} />
 

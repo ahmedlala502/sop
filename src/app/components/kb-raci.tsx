@@ -31,7 +31,7 @@ export function RACIPage({ mode }: { mode: LangMode }) {
 
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Operations Lead", ar: "قائد العمليات" }} approver={{ en: "CEO", ar: "الرئيس التنفيذي" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "CEO", ar: "الرئيس التنفيذي" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "04 — RACI Matrix", ar: "04 — مصفوفة RACI" }} mode={mode}
         subtitle={{ en: "Responsibility Assignment Matrix — who does what for every key activity", ar: "مصفوفة توزيع المسؤوليات — من يفعل ماذا لكل نشاط رئيسي" }} />
 

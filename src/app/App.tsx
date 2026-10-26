@@ -1,24 +1,41 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronRight,
-  Search as SearchIcon,
   BookOpen,
+  Compass,
   Users,
-  Settings,
-  Activity,
+  Settings2,
+  MessageSquare,
   Clock,
-  CheckCircle2,
-  Workflow,
-  FileText,
-  Star,
-  TrendingUp,
+  ClipboardCheck,
+  UserPlus,
+  Send,
+  SlidersHorizontal,
+  ShieldCheck,
+  Database,
+  MapPin,
   Zap,
-  Globe,
-  Moon,
-  Sun,
+  Gem,
+  Workflow,
+  GitBranch,
+  MessagesSquare,
+  RefreshCw,
+  Image,
+  Handshake,
+  Network,
+  Table2,
+  BarChart3,
+  Sparkles,
+  Star,
+  Search as SearchIcon,
   Menu,
   X,
-  Layers,
+  PanelLeft,
+  Moon,
+  Sun,
+  Globe,
+  ChevronRight,
+  ChevronDown,
+  ArrowUp,
 } from "lucide-react";
 
 import {
@@ -31,9 +48,17 @@ import {
   getThemeVars,
   Pill,
   TRYGC,
-  GROUP_COLORS,
 } from "./components/kb-types";
 
+import {
+  type NavItem,
+  PageHeader,
+  ReadingProgress,
+  TableOfContents,
+  MobileToc,
+  CommandPalette,
+  usePageToc,
+} from "./components/kb-shell";
 import { CoverPage } from "./components/kb-cover";
 import { IAPage } from "./components/kb-ia";
 import { SOPPage } from "./components/kb-sop";
@@ -51,242 +76,346 @@ import { InfluencerTemplatesPage, ClientTemplatesPage } from "./components/kb-te
 import { KPIsPage } from "./components/kb-kpis";
 import { AutomationProposalPage } from "./components/kb-automation-proposal";
 
-// ─── Sidebar Navigation Items ────────────────────────────────
-const SIDEBAR_ITEMS: Array<{
-  key: PageKey;
-  label: Bi;
-  group?: Bi;
-  icon: React.ReactNode;
-}> = [
+// ─── Navigation groups ───────────────────────────────────────
+const NAV_GROUPS: Array<{ id: string; label: Bi }> = [
+  { id: "start", label: { en: "Start here", ar: "ابدأ من هنا" } },
+  { id: "core", label: { en: "Core functions", ar: "الوظائف الأساسية" } },
+  { id: "support", label: { en: "Support functions", ar: "الوظائف المساندة" } },
+  { id: "workflows", label: { en: "Workflow maps", ar: "خرائط سير العمل" } },
+  { id: "reference", label: { en: "Reference and governance", ar: "المرجع والحوكمة" } },
+  { id: "templates", label: { en: "Templates library", ar: "مكتبة القوالب" } },
+  { id: "automation", label: { en: "Automation", ar: "الأتمتة" } },
+];
+
+const GROUP_LABELS: Record<string, Bi> = Object.fromEntries(
+  NAV_GROUPS.map((group) => [group.id, group.label])
+);
+
+// ─── Navigation registry ─────────────────────────────────────
+const NAV_ITEMS: NavItem[] = [
   {
     key: "cover",
     label: { en: "Home", ar: "الرئيسية" },
-    group: { en: "Getting Started", ar: "البداية" },
+    group: "start",
     icon: <BookOpen className="h-4 w-4" />,
+    description: {
+      en: "Purpose, principles, and the fastest paths into the knowledge base.",
+      ar: "الهدف والمبادئ وأسرع الطرق للدخول إلى قاعدة المعرفة.",
+    },
+    keywords: ["overview", "principles", "start", "home"],
   },
   {
     key: "ia",
-    label: { en: "How to Navigate", ar: "كيفية التنقل" },
-    icon: <Layers className="h-4 w-4" />,
+    label: { en: "How to navigate", ar: "كيفية التنقل" },
+    group: "start",
+    icon: <Compass className="h-4 w-4" />,
+    description: {
+      en: "How the knowledge base is organised and how to move through it.",
+      ar: "كيف تُنظَّم قاعدة المعرفة وكيف تتنقل بين أقسامها.",
+    },
+    keywords: ["structure", "sitemap", "navigation", "guide"],
   },
+
   {
     key: "sop_community",
-    label: { en: "Community Team", ar: "فريق الكوميونيتي" },
-    group: { en: "Community Team", ar: "فريق الكوميونيتي" },
+    label: { en: "Community team", ar: "فريق الكوميونيتي" },
+    group: "core",
     icon: <Users className="h-4 w-4" />,
+    description: {
+      en: "Client relationships, sourcing, bookings, and campaign targets.",
+      ar: "علاقات العملاء والاختيار والحجوزات وأهداف الحملات.",
+    },
+    keywords: ["clients", "sourcing", "bookings", "targets"],
   },
   {
     key: "sop_coordination",
-    label: { en: "Coordination Hub", ar: "مركز التنسيق" },
-    group: { en: "Operations Functions", ar: "وظائف العمليات" },
-    icon: <Settings className="h-4 w-4" />,
+    label: { en: "Coordination hub", ar: "مركز التنسيق" },
+    group: "core",
+    icon: <Settings2 className="h-4 w-4" />,
+    description: {
+      en: "Campaign setup, folders, sheets, system entries, and reporting.",
+      ar: "إعداد الحملات والفولدرات والشيتات وإدخالات النظام والتقارير.",
+    },
+    keywords: ["setup", "folders", "system", "reports"],
   },
   {
     key: "sop_chat",
-    label: { en: "Chat & WhatsApp", ar: "الشات والواتساب" },
-    icon: <Activity className="h-4 w-4" />,
+    label: { en: "Chat and WhatsApp", ar: "الشات والواتساب" },
+    group: "core",
+    icon: <MessageSquare className="h-4 w-4" />,
+    description: {
+      en: "Invitations, reply logging, reminders, briefs, and live support.",
+      ar: "الدعوات وتسجيل الردود والتذكيرات والبرِيفات والدعم المباشر.",
+    },
+    keywords: ["whatsapp", "messages", "invites", "briefs"],
   },
   {
     key: "sop_followup",
-    label: { en: "Follow-Up System", ar: "نظام المتابعة" },
+    label: { en: "Follow-up system", ar: "نظام المتابعة" },
+    group: "core",
     icon: <Clock className="h-4 w-4" />,
+    description: {
+      en: "Reminder cadence, confirmations, rescheduling, and end of day updates.",
+      ar: "إيقاع التذكيرات والتأكيدات وإعادة الجدولة وتحديثات نهاية اليوم.",
+    },
+    keywords: ["reminders", "confirmations", "reschedule", "eod"],
   },
   {
     key: "sop_coverage",
-    label: { en: "Coverage & QA", ar: "التغطية والجودة" },
-    icon: <CheckCircle2 className="h-4 w-4" />,
+    label: { en: "Coverage and QA", ar: "التغطية والجودة" },
+    group: "core",
+    icon: <ClipboardCheck className="h-4 w-4" />,
+    description: {
+      en: "Post tracking, proof capture, quality checks, and archiving.",
+      ar: "تتبع المنشورات وحفظ الإثباتات وفحوص الجودة والأرشفة.",
+    },
+    keywords: ["proof", "qa", "archive", "pcloud", "posts"],
   },
+
   {
     key: "sop_onboarding",
     label: { en: "Onboarding", ar: "التأهيل" },
-    icon: <Users className="h-4 w-4" />,
+    group: "support",
+    icon: <UserPlus className="h-4 w-4" />,
+    description: {
+      en: "Creator validation, briefing, and handover into coordination.",
+      ar: "التحقق من المؤثرين وتجهيزهم وتسليمهم إلى التنسيق.",
+    },
+    keywords: ["creators", "briefing", "validation"],
   },
   {
     key: "sop_outreach",
     label: { en: "Outreach", ar: "الوصول" },
-    icon: <Activity className="h-4 w-4" />,
+    group: "support",
+    icon: <Send className="h-4 w-4" />,
+    description: {
+      en: "First contact, follow-up touches, and a clean handover.",
+      ar: "أول تواصل ولمسات المتابعة وتسليم نظيف.",
+    },
+    keywords: ["first contact", "handover", "queue"],
   },
   {
     key: "sop_operations",
-    label: { en: "Operations Mgmt", ar: "إدارة العمليات" },
-    icon: <Settings className="h-4 w-4" />,
+    label: { en: "Operations management", ar: "إدارة العمليات" },
+    group: "support",
+    icon: <SlidersHorizontal className="h-4 w-4" />,
+    description: {
+      en: "SLAs, escalation paths, and the operating cadence.",
+      ar: "اتفاقيات مستوى الخدمة ومسارات التصعيد والإيقاع التشغيلي.",
+    },
+    keywords: ["sla", "escalation", "governance", "cadence"],
   },
   {
     key: "sop_quality",
-    label: { en: "Quality Assurance", ar: "ضمان الجودة" },
-    icon: <CheckCircle2 className="h-4 w-4" />,
+    label: { en: "Quality assurance", ar: "ضمان الجودة" },
+    group: "support",
+    icon: <ShieldCheck className="h-4 w-4" />,
+    description: {
+      en: "Audit plan, release authority, and the defect loop.",
+      ar: "خطة التدقيق وسلطة الإصدار ودورة معالجة العيوب.",
+    },
+    keywords: ["audit", "defect", "release"],
   },
   {
     key: "sop_data",
-    label: { en: "Data & Supply", ar: "البيانات والتوريد" },
-    icon: <FileText className="h-4 w-4" />,
+    label: { en: "Data and supply", ar: "البيانات والتوريد" },
+    group: "support",
+    icon: <Database className="h-4 w-4" />,
+    description: {
+      en: "Creator scoring, data quality, and the supply pipeline.",
+      ar: "تقييم المؤثرين وجودة البيانات وخط الإمداد.",
+    },
+    keywords: ["scoring", "supply", "data quality"],
   },
   {
     key: "sop_regional",
-    label: { en: "Regional Ops", ar: "العمليات الإقليمية" },
-    icon: <Clock className="h-4 w-4" />,
+    label: { en: "Regional operations", ar: "العمليات الإقليمية" },
+    group: "support",
+    icon: <MapPin className="h-4 w-4" />,
+    description: {
+      en: "Vendor and venue issues, regional coordination, and failure review.",
+      ar: "مشاكل الموردين والمواقع والتنسيق الإقليمي ومراجعة الإخفاقات.",
+    },
+    keywords: ["vendor", "venue", "regions"],
   },
   {
     key: "sop_flex",
     label: { en: "Flex", ar: "فليكس" },
+    group: "support",
     icon: <Zap className="h-4 w-4" />,
+    description: {
+      en: "Surge capacity, deployment order, and redeployment rules.",
+      ar: "السعة الإضافية وترتيب الانتشار وقواعد إعادة التوزيع.",
+    },
+    keywords: ["surge", "capacity", "deployment"],
   },
   {
     key: "sop_elite",
     label: { en: "Elite", ar: "النخبة" },
-    icon: <Star className="h-4 w-4" />,
+    group: "support",
+    icon: <Gem className="h-4 w-4" />,
+    description: {
+      en: "Premium creators, white-glove handling, and campaign controls.",
+      ar: "المؤثرون المميزون والتعامل الاستثنائي وضوابط الحملات.",
+    },
+    keywords: ["premium", "white glove", "vip"],
   },
+
   {
     key: "wf_e2e",
-    label: { en: "End-to-End Workflow", ar: "سير العمل الكامل" },
-    group: { en: "Workflow Maps", ar: "خرائط سير العمل" },
+    label: { en: "End-to-end workflow", ar: "سير العمل الكامل" },
+    group: "workflows",
     icon: <Workflow className="h-4 w-4" />,
+    description: {
+      en: "The full campaign lifecycle from brief to final report.",
+      ar: "دورة الحملة الكاملة من البرِيف إلى التقرير النهائي.",
+    },
+    keywords: ["lifecycle", "process", "campaign"],
   },
   {
     key: "wf_coordination",
-    label: { en: "Coordination Flow", ar: "تدفق التنسيق" },
-    icon: <Workflow className="h-4 w-4" />,
+    label: { en: "Coordination flow", ar: "تدفق التنسيق" },
+    group: "workflows",
+    icon: <GitBranch className="h-4 w-4" />,
+    description: {
+      en: "How coordination moves a campaign from setup to close.",
+      ar: "كيف ينقل التنسيق الحملة من الإعداد إلى الإغلاق.",
+    },
+    keywords: ["flow", "setup", "close"],
   },
   {
     key: "wf_chat",
-    label: { en: "Communication Flow", ar: "تدفق التواصل" },
-    icon: <Workflow className="h-4 w-4" />,
+    label: { en: "Communication flow", ar: "تدفق التواصل" },
+    group: "workflows",
+    icon: <MessagesSquare className="h-4 w-4" />,
+    description: {
+      en: "Message flow from invitation to live support.",
+      ar: "تدفق الرسائل من الدعوة إلى الدعم المباشر.",
+    },
+    keywords: ["communication", "messages", "support"],
   },
   {
     key: "wf_followup",
-    label: { en: "Follow-Up Flow", ar: "تدفق المتابعة" },
-    icon: <Workflow className="h-4 w-4" />,
+    label: { en: "Follow-up flow", ar: "تدفق المتابعة" },
+    group: "workflows",
+    icon: <RefreshCw className="h-4 w-4" />,
+    description: {
+      en: "Reminder and confirmation flow, including exceptions.",
+      ar: "تدفق التذكير والتأكيد بما في ذلك الاستثناءات.",
+    },
+    keywords: ["reminders", "exceptions", "flow"],
   },
   {
     key: "wf_coverage",
-    label: { en: "Coverage Flow", ar: "تدفق التغطية" },
-    icon: <Workflow className="h-4 w-4" />,
+    label: { en: "Coverage flow", ar: "تدفق التغطية" },
+    group: "workflows",
+    icon: <Image className="h-4 w-4" />,
+    description: {
+      en: "Proof capture and quality flow through to archive.",
+      ar: "تدفق حفظ الإثباتات والجودة حتى الأرشفة.",
+    },
+    keywords: ["proof", "quality", "archive"],
   },
   {
     key: "wf_community",
-    label: { en: "Community Flow", ar: "تدفق الكوميونيتي" },
-    icon: <Workflow className="h-4 w-4" />,
+    label: { en: "Community flow", ar: "تدفق الكوميونيتي" },
+    group: "workflows",
+    icon: <Handshake className="h-4 w-4" />,
+    description: {
+      en: "Client request flow from intake to delivery.",
+      ar: "تدفق طلبات العملاء من الاستلام إلى التسليم.",
+    },
+    keywords: ["clients", "requests", "delivery"],
   },
+
   {
     key: "raci",
-    label: { en: "RACI Matrix", ar: "مصفوفة RACI" },
-    group: { en: "Reference & Governance", ar: "المرجع والحوكمة" },
-    icon: <FileText className="h-4 w-4" />,
+    label: { en: "RACI matrix", ar: "مصفوفة RACI" },
+    group: "reference",
+    icon: <Network className="h-4 w-4" />,
+    description: {
+      en: "Who is responsible, accountable, consulted, and informed.",
+      ar: "من المسؤول ومن المحاسب ومن يُستشار ومن يُبلَّغ.",
+    },
+    keywords: ["roles", "responsibility", "accountability"],
   },
   {
     key: "gsheets",
-    label: { en: "Sheets Blueprint", ar: "هيكلة الشيتات" },
-    icon: <FileText className="h-4 w-4" />,
+    label: { en: "Sheets blueprint", ar: "هيكلة الشيتات" },
+    group: "reference",
+    icon: <Table2 className="h-4 w-4" />,
+    description: {
+      en: "Sheet structure, tabs, fields, and ownership.",
+      ar: "هيكلة الشيتات والتبويبات والحقول والمالك.",
+    },
+    keywords: ["sheets", "tracker", "fields", "google"],
   },
   {
     key: "kpis",
-    label: { en: "KPIs & Analytics", ar: "المؤشرات والتحليلات" },
-    icon: <TrendingUp className="h-4 w-4" />,
+    label: { en: "KPIs and analytics", ar: "المؤشرات والتحليلات" },
+    group: "reference",
+    icon: <BarChart3 className="h-4 w-4" />,
+    description: {
+      en: "Targets, definitions, and reporting cadence.",
+      ar: "الأهداف والتعريفات وإيقاع التقارير.",
+    },
+    keywords: ["metrics", "targets", "sla", "analytics"],
   },
-  {
-    key: "automation_proposal",
-    label: { en: "Automation Proposal", ar: "الاقتراح الآلي" },
-    group: { en: "Automation Proposal", ar: "الاقتراح الآلي" },
-    icon: <Zap className="h-4 w-4" />,
-  },
+
   {
     key: "templates_influencers",
-    label: { en: "Influencer Templates", ar: "قوالب المؤثرين" },
-    group: { en: "Templates Library", ar: "مكتبة القوالب" },
+    label: { en: "Influencer templates", ar: "قوالب المؤثرين" },
+    group: "templates",
     icon: <Star className="h-4 w-4" />,
+    description: {
+      en: "Ready message templates for creator communication.",
+      ar: "قوالب رسائل جاهزة للتواصل مع المؤثرين.",
+    },
+    keywords: ["messages", "copy", "creators", "templates"],
   },
   {
     key: "templates_clients",
-    label: { en: "Client Templates", ar: "قوالب العملاء" },
-    icon: <Star className="h-4 w-4" />,
+    label: { en: "Client templates", ar: "قوالب العملاء" },
+    group: "templates",
+    icon: <BookOpen className="h-4 w-4" />,
+    description: {
+      en: "Ready message templates for client communication.",
+      ar: "قوالب رسائل جاهزة للتواصل مع العملاء.",
+    },
+    keywords: ["messages", "copy", "clients", "templates"],
+  },
+
+  {
+    key: "automation_proposal",
+    label: { en: "Automation proposal", ar: "مقترح الأتمتة" },
+    group: "automation",
+    icon: <Sparkles className="h-4 w-4" />,
+    description: {
+      en: "Proposed automation and interface improvements.",
+      ar: "مقترحات الأتمتة وتحسين الواجهة.",
+    },
+    keywords: ["automation", "ai", "proposal", "improvements"],
   },
 ];
 
-// ─── Page title map ──────────────────────────────────────────
-const PAGE_TITLES: Record<PageKey, Bi> = {
-  cover: { en: "System Overview & Quick Start", ar: "نظرة عامة وبداية سريعة" },
-  ia: { en: "How to Navigate This KB", ar: "كيفية التنقل في قاعدة المعرفة" },
-  sop_community: { en: "Community Team Procedures", ar: "إجراءات فريق الكوميونيتي" },
-  sop_coordination: { en: "Coordination Hub Procedures", ar: "إجراءات مركز التنسيق" },
-  sop_chat: { en: "Chat & WhatsApp Procedures", ar: "إجراءات الشات والواتساب" },
-  sop_followup: { en: "Follow-Up System Procedures", ar: "إجراءات نظام المتابعة" },
-  sop_coverage: { en: "Coverage & Quality Assurance", ar: "التغطية وضمان الجودة" },
-  sop_operations: { en: "Operations Management", ar: "إدارة العمليات" },
-  sop_onboarding: { en: "Onboarding SOP", ar: "إجراءات التأهيل" },
-  sop_outreach: { en: "Outreach SOP", ar: "إجراءات الوصول" },
-  sop_quality: { en: "Quality Assurance SOP", ar: "إجراءات ضمان الجودة" },
-  sop_data: { en: "Data & Supply SOP", ar: "إجراءات البيانات والتوريد" },
-  sop_regional: { en: "Regional Ops Support SOP", ar: "دعم العمليات الإقليمي" },
-  sop_flex: { en: "Flex Operations SOP", ar: "عمليات فليكس" },
-  sop_elite: { en: "Elite SOP", ar: "إجراءات النخبة" },
-  wf_e2e: { en: "End-to-End Campaign Workflow", ar: "سير عمل الحملة الكامل" },
-  wf_coordination: { en: "Coordination Workflow Map", ar: "خريطة سير عمل التنسيق" },
-  wf_chat: { en: "Communication Workflow Map", ar: "خريطة سير عمل التواصل" },
-  wf_followup: { en: "Follow-Up Workflow Map", ar: "خريطة سير عمل المتابعة" },
-  wf_coverage: { en: "Coverage Workflow Map", ar: "خريطة سير عمل التغطية" },
-  wf_community: { en: "Community Workflow Map", ar: "خريطة سير عمل الكوميونيتي" },
-  raci: { en: "RACI Responsibility Matrix", ar: "مصفوفة المسؤوليات RACI" },
-  gsheets: { en: "Google Sheets Blueprint", ar: "هيكلة جوجل شيتس" },
-  templates_influencers: { en: "Influencer Communication Templates", ar: "قوالب التواصل مع المؤثرين" },
-  templates_clients: { en: "Client Communication Templates", ar: "قوالب التواصل مع العملاء" },
-  kpis: { en: "Key Performance Indicators & SLAs", ar: "مؤشرات الأداء الرئيسية" },
-  automation_proposal: { en: "Automation & UI Improvement Proposal", ar: "مقترح تحسين وأتمتة وواجهة المستخدم" },
-};
+const NAV_BY_KEY = new Map<PageKey, NavItem>(NAV_ITEMS.map((item) => [item.key, item]));
+const PAGE_KEYS = new Set<PageKey>(NAV_ITEMS.map((item) => item.key));
 
-// ─── Toggle Group ───────────────────────────────────────────
-function ToggleGroup<T extends string>({
-  value,
-  onChange,
-  options,
-  right,
-}: {
-  value: T;
-  onChange: (v: T) => void;
-  options: Array<{ value: T; label: string; icon?: React.ReactNode }>;
-  right?: boolean;
-}) {
-  return (
-    <div
-      className={cx("inline-flex rounded-xl p-1", right && "flex-row-reverse")}
-      style={{ background: "var(--bg)", border: "1px solid var(--line)" }}
-    >
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            key={o.value}
-            onClick={() => onChange(o.value)}
-            className={cx(
-              "flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-all duration-200",
-            )}
-            style={{
-              fontWeight: 700,
-              background: active ? TRYGC.orange : "transparent",
-              color: active ? "#fff" : "var(--muted)",
-            }}
-          >
-            {o.icon}
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Page Content Router ─────────────────────────────────────
+// ─── Page content router ─────────────────────────────────────
 function PageContent({
   page,
   mode,
   onNavigate,
+  onSearch,
 }: {
   page: PageKey;
   mode: LangMode;
   onNavigate: (p: PageKey) => void;
+  onSearch: () => void;
 }) {
   switch (page) {
     case "cover":
-      return <CoverPage mode={mode} goTo={onNavigate} />;
+      return <CoverPage mode={mode} goTo={onNavigate} onSearch={onSearch} />;
     case "ia":
       return <IAPage mode={mode} goTo={onNavigate} />;
     case "sop_community":
@@ -332,267 +461,473 @@ function PageContent({
   }
 }
 
+// ─── Hash routing helpers ────────────────────────────────────
+function pageFromHash(): PageKey | null {
+  try {
+    const raw = decodeURIComponent(window.location.hash.replace(/^#\/?/, "")).trim();
+    return PAGE_KEYS.has(raw as PageKey) ? (raw as PageKey) : null;
+  } catch {
+    return null;
+  }
+}
+
+function storedPage(): PageKey | null {
+  try {
+    const raw = localStorage.getItem("trygc_kb_page");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return PAGE_KEYS.has(parsed) ? (parsed as PageKey) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Language control ────────────────────────────────────────
+function LanguageControl({
+  value,
+  onChange,
+}: {
+  value: LangMode;
+  onChange: (mode: LangMode) => void;
+}) {
+  const options: Array<{ value: LangMode; label: string; title: string }> = [
+    { value: "BOTH", label: "EN+AR", title: "Show English and Arabic" },
+    { value: "EN", label: "EN", title: "Show English only" },
+    { value: "AR", label: "AR", title: "Show Arabic only" },
+  ];
+  return (
+    <div className="kb-seg" role="group" aria-label="Language">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          aria-pressed={value === option.value}
+          title={option.title}
+          className={cx("kb-seg-btn", value === option.value && "is-active")}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────
+function Sidebar({
+  page,
+  onNavigate,
+  onSearch,
+  collapsedGroups,
+  onToggleGroup,
+  onClose,
+  isMac,
+  langMode,
+}: {
+  page: PageKey;
+  onNavigate: (page: PageKey) => void;
+  onSearch: () => void;
+  collapsedGroups: string[];
+  onToggleGroup: (groupId: string) => void;
+  onClose: () => void;
+  isMac: boolean;
+  langMode: LangMode;
+}) {
+  return (
+    <aside className="kb-sidebar" aria-label="Knowledge base navigation">
+      <div className="kb-sidebar-head">
+        <button type="button" onClick={() => onNavigate("cover")} className="kb-brand" aria-label="TryGC Knowledge Base home">
+          <img
+            src="/trygc-logo.png"
+            alt=""
+            className="kb-brand-mark"
+            width={38}
+            height={38}
+            decoding="async"
+          />
+          <span className="min-w-0 text-start">
+            <span className="kb-brand-name">TryGC</span>
+            <span className="kb-brand-sub">Knowledge Base</span>
+          </span>
+        </button>
+        <button type="button" onClick={onClose} className="kb-icon-btn lg:hidden" aria-label="Close navigation">
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="px-3 pb-3">
+        <button type="button" onClick={onSearch} className="kb-sidebar-search">
+          <SearchIcon className="h-4 w-4 shrink-0" style={{ color: "var(--muted)" }} aria-hidden="true" />
+          <span className="flex-1 text-start">Search</span>
+          <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
+        </button>
+      </div>
+
+      <nav className="kb-sidebar-nav" aria-label="Pages">
+        {NAV_GROUPS.map((group) => {
+          const groupItems = NAV_ITEMS.filter((item) => item.group === group.id);
+          const isOpen = !collapsedGroups.includes(group.id);
+          return (
+            <div key={group.id} className="kb-nav-group">
+              <button
+                type="button"
+                onClick={() => onToggleGroup(group.id)}
+                aria-expanded={isOpen}
+                className="kb-nav-group-btn"
+              >
+                <span className="flex-1 text-start">
+                  {langMode === "AR" ? group.label.ar : group.label.en}
+                </span>
+                <span className="kb-nav-count">{groupItems.length}</span>
+                <ChevronDown
+                  className={cx("h-3.5 w-3.5 shrink-0 transition-transform duration-200", !isOpen && "-rotate-90 rtl:rotate-90")}
+                  aria-hidden="true"
+                />
+              </button>
+              {isOpen && (
+                <div className="kb-nav-items">
+                  {groupItems.map((item) => {
+                    const active = item.key === page;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => onNavigate(item.key)}
+                        className={cx("kb-nav-item", active && "is-active")}
+                        aria-current={active ? "page" : undefined}
+                        title={langModeTitle(item.label)}
+                      >
+                        <span className="kb-nav-icon" aria-hidden="true">{item.icon}</span>
+                        <span className="min-w-0 flex-1">
+                          {langMode !== "AR" && <span className="kb-nav-label">{item.label.en}</span>}
+                          {langMode !== "EN" && (
+                            <span
+                              className="kb-nav-label-ar"
+                              lang="ar"
+                              dir="rtl"
+                              style={langMode === "AR" ? { fontSize: 12, opacity: 0.9, fontWeight: 600 } : undefined}
+                            >
+                              {item.label.ar}
+                            </span>
+                          )}
+                        </span>
+                        <ChevronRight
+                          className={cx("kb-nav-chevron", active && "opacity-100")}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
+
+      <div className="kb-sidebar-foot">
+        <div className="flex items-center gap-2">
+          <Pill text="v3.0" tone="purple" />
+          <span className="text-[11px]" style={{ color: "var(--muted)" }}>Updated 15 Sep 2026</span>
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: "var(--muted)" }}>
+          Maintained by Operations. Every change is documented.
+        </p>
+      </div>
+    </aside>
+  );
+}
+
+function langModeTitle(label: Bi) {
+  return `${label.en} / ${label.ar}`;
+}
+
 // ─── Main App ────────────────────────────────────────────────
 function App() {
   const [theme, setTheme] = useLocalStorage<"dark" | "light">("trygc_kb_theme", "dark");
   const [langMode, setLangMode] = useLocalStorage<LangMode>("trygc_kb_lang", "BOTH");
-  const [page, setPage] = useLocalStorage<PageKey>("trygc_kb_page", "cover");
-  const [search, setSearch] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
+  const [sidebarHidden, setSidebarHidden] = useLocalStorage<boolean>("trygc_kb_sidebar_hidden", false);
+  const [collapsedGroups, setCollapsedGroups] = useLocalStorage<string[]>("trygc_kb_closed_groups", []);
 
+  const [page, setPage] = useState<PageKey>(() => pageFromHash() ?? storedPage() ?? "cover");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+
+  const contentRef = useRef<HTMLDivElement>(null);
   const isRTL = langMode === "AR";
   const vars = useMemo(() => getThemeVars(theme), [theme]);
+  const currentItem = NAV_BY_KEY.get(page) || NAV_ITEMS[0];
+  const currentGroup = GROUP_LABELS[currentItem.group] || currentItem.group;
+  const tocItems = usePageToc(contentRef, page, langMode);
+  const hasToc = tocItems.length > 1;
 
-  const topTitle: Bi = {
-    en: "TryGC Community & Operations KB",
-    ar: "قاعدة معرفة مجتمع وعمليات TryGC",
-  };
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.platform));
+  }, []);
 
-  // Mock campaigns for dropdown
-  const campaigns = [
-    { value: "all", label: isRTL ? "كل الحملات" : "All Campaigns" },
-    { value: "bnk_saudi_jan26", label: "BNK Saudi - Jan 2026" },
-    { value: "luxe_uae_feb26", label: "Luxe UAE - Feb 2026" },
-    { value: "tech_kw_mar26", label: "Tech KW - Mar 2026" },
-  ];
+  // Theme on the document so native surfaces and overscroll match.
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.style.background = theme === "dark" ? "#0B0713" : "#F5F3F7";
+  }, [theme]);
 
-  // Filter sidebar items by search
-  const filteredItems = useMemo(() => {
-    if (!search.trim()) return SIDEBAR_ITEMS;
-    const q = search.toLowerCase();
-    return SIDEBAR_ITEMS.filter(
-      (it) =>
-        it.label.en.toLowerCase().includes(q) ||
-        it.label.ar.includes(q) ||
-        it.group?.en.toLowerCase().includes(q) ||
-        it.group?.ar.includes(q)
+  // URL, persistence, title, and scroll reset.
+  useEffect(() => {
+    try {
+      localStorage.setItem("trygc_kb_page", JSON.stringify(page));
+    } catch {}
+    document.title = `${currentItem.label.en} · TryGC Knowledge Base`;
+    const target = `#/${page}`;
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", target);
+    }
+    window.scrollTo(0, 0);
+  }, [page, currentItem.label.en]);
+
+  // Back and forward support.
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = pageFromHash();
+      if (next) setPage(next);
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Keep the active group open.
+  useEffect(() => {
+    setCollapsedGroups((previous) =>
+      previous.includes(currentItem.group)
+        ? previous.filter((id) => id !== currentItem.group)
+        : previous
     );
-  }, [search]);
+  }, [currentItem.group, setCollapsedGroups]);
+
+  // Keyboard shortcuts.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen((open) => !open);
+      } else if (event.key === "/" && !typing) {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  // Body scroll lock for the mobile drawer.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
+
+  const navigate = useCallback(
+    (next: PageKey) => {
+      setMobileOpen(false);
+      setSearchOpen(false);
+      if (next === page) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (pageFromHash() === next) {
+        setPage(next);
+        return;
+      }
+      window.location.hash = `#/${next}`;
+    },
+    [page]
+  );
+
+  const toggleGroup = useCallback(
+    (groupId: string) => {
+      setCollapsedGroups((previous) =>
+        previous.includes(groupId)
+          ? previous.filter((id) => id !== groupId)
+          : [...previous, groupId]
+      );
+    },
+    [setCollapsedGroups]
+  );
 
   return (
     <div
       style={vars}
       dir={isRTL ? "rtl" : "ltr"}
       lang={isRTL ? "ar" : "en"}
-      className="min-h-screen transition-colors duration-300"
+      className={cx("kb-app min-h-[100dvh]", isRTL ? "font-ar" : "font-en")}
     >
+      <a href="#kb-main" className="kb-skip-link">Skip to content</a>
+
+      <div className="flex min-h-[100dvh]">
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-sm lg:hidden"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        <div
+          className={cx(
+            "kb-sidebar-shell",
+            mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full",
+            "lg:translate-x-0 rtl:lg:translate-x-0",
+            sidebarHidden && "lg:hidden"
+          )}
+        >
+          <Sidebar
+            page={page}
+            onNavigate={navigate}
+            onSearch={() => setSearchOpen(true)}
+            collapsedGroups={collapsedGroups}
+            onToggleGroup={toggleGroup}
+            onClose={() => setMobileOpen(false)}
+            isMac={isMac}
+            langMode={langMode}
+          />
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="kb-topbar">
+            <ReadingProgress />
+            <div className="kb-topbar-inner">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="kb-icon-btn lg:hidden"
+                aria-label="Open navigation"
+              >
+                <Menu className="h-5 w-5" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSidebarHidden((hidden) => !hidden)}
+                className="kb-icon-btn hidden lg:inline-flex"
+                aria-label={sidebarHidden ? "Show navigation" : "Hide navigation"}
+                title={sidebarHidden ? "Show navigation" : "Hide navigation"}
+              >
+                <PanelLeft className="h-4 w-4" aria-hidden="true" />
+              </button>
+
+              <div className="kb-crumbs">
+                <span className="kb-crumb-group hidden sm:inline">
+                  {langMode === "AR" ? currentGroup.ar : currentGroup.en}
+                </span>
+                <ChevronRight className="hidden h-3.5 w-3.5 shrink-0 opacity-50 sm:block rtl:rotate-180" aria-hidden="true" />
+                <span className="kb-crumb-current">
+                  {langMode === "AR" ? currentItem.label.ar : currentItem.label.en}
+                </span>
+              </div>
+
+              <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="kb-search-trigger"
+                  aria-label="Search the knowledge base"
+                >
+                  <SearchIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span className="hidden md:inline">Search</span>
+                  <kbd className="hidden md:inline-flex">{isMac ? "⌘K" : "Ctrl K"}</kbd>
+                </button>
+
+                <LanguageControl value={langMode} onChange={setLangMode} />
+
+                <button
+                  type="button"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="kb-icon-btn"
+                  aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+                  title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+                >
+                  {theme === "dark" ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <main id="kb-main" tabIndex={-1} className="flex-1">
+            <div className="kb-main-wrap">
+              <div className={cx("kb-layout", hasToc && "has-toc")}>
+                <div ref={contentRef} className="min-w-0">
+                  {page !== "cover" && (
+                    <PageHeader item={currentItem} groupLabel={currentGroup} mode={langMode} />
+                  )}
+
+                  <MobileToc items={tocItems} langMode={langMode} />
+
+                  <div key={page} className="kb-page-enter">
+                    <PageContent
+                      page={page}
+                      mode={langMode}
+                      onNavigate={navigate}
+                      onSearch={() => setSearchOpen(true)}
+                    />
+                  </div>
+
+                  <footer className="kb-footer">
+                    <div className="min-w-0">
+                      <p style={{ fontWeight: 700, color: "var(--text)" }}>TryGC Knowledge Base</p>
+                      <p>Community and operations. Version 3.0. Last reviewed 15 Sep 2026.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="hidden items-center gap-1.5 sm:flex">
+                        <Globe className="h-3.5 w-3.5" aria-hidden="true" />
+                        {langMode === "AR" ? "العربية" : langMode === "EN" ? "English" : "English + العربية"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        className="kb-footer-top"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
+                        {langMode === "AR" ? "إلى الأعلى" : "Back to top"}
+                      </button>
+                    </div>
+                  </footer>
+
+                  <p className="sr-only" aria-live="polite">
+                    {currentItem.label.en}
+                  </p>
+                </div>
+
+                <TableOfContents items={tocItems} langMode={langMode} />
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <CommandPalette
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        items={NAV_ITEMS}
+        groupLabels={GROUP_LABELS}
+        langMode={langMode}
+        onNavigate={navigate}
+        currentPage={page}
+      />
+
       <style>{`
-        .font-en { font-family: Inter, system-ui, -apple-system, sans-serif; }
-        .font-ar { font-family: "Noto Kufi Arabic", system-ui, sans-serif; line-height: 1.8; }
-        * { transition: background-color 0.2s ease, border-color 0.2s ease; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-slide-in {
-          animation: slideIn 0.3s ease-out;
+        .kb-brand-mark {
+          background: linear-gradient(140deg, ${TRYGC.purple} 0%, ${TRYGC.purpleDark} 62%, ${TRYGC.orange} 160%);
         }
       `}</style>
-
-      <div
-        className="flex min-h-screen"
-        style={{ background: "var(--bg)", color: "var(--text)" }}
-      >
-        {/* ─── Sidebar ──────────────────────────────────── */}
-        <aside
-          className={cx(
-            "sticky top-0 h-screen shrink-0 transition-all duration-300 overflow-hidden",
-            isRTL ? "border-l" : "border-r",
-            sidebarOpen ? "w-[300px]" : "w-0"
-          )}
-          style={{ background: "var(--card)", borderColor: "var(--line)" }}
-        >
-          <div className="flex h-full flex-col p-5 w-[300px]">
-            {/* Logo */}
-            <div className="flex items-center gap-3 pb-5">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-2xl shrink-0"
-                style={{ background: `linear-gradient(135deg, ${TRYGC.purple}, ${TRYGC.orange})` }}
-              >
-                <span className="text-xl text-white" style={{ fontWeight: 900 }}>G</span>
-              </div>
-              <div className={cx("min-w-0 flex-1", isRTL && "text-right")}>
-                <div className={cx("text-sm leading-tight", isRTL ? "font-ar" : "font-en")} style={{ fontWeight: 800, color: "var(--text)" }}>
-                  <BiText bi={topTitle} mode={langMode} />
-                </div>
-                <div className="flex items-center gap-1.5 mt-0.5 text-xs" style={{ color: "var(--muted)", fontWeight: 600 }}>
-                  <Zap className="h-3 w-3" />
-                  <span>v3.0</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="pb-4">
-              <div className="relative">
-                <SearchIcon
-                  className={cx("absolute top-1/2 -translate-y-1/2 h-4 w-4", isRTL ? "right-3" : "left-3")}
-                  style={{ color: "var(--muted)" }}
-                />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={isRTL ? "ابحث..." : "Search..."}
-                  className={cx(
-                    "w-full rounded-xl py-2.5 text-sm outline-none transition-all",
-                    isRTL ? "pr-3 pl-9" : "pl-9 pr-3"
-                  )}
-                  style={{
-                    background: "var(--bg)",
-                    border: "1px solid var(--line)",
-                    color: "var(--text)",
-                    fontWeight: 500,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Nav */}
-            <nav className="flex-1 overflow-y-auto pb-4 space-y-0.5">
-              {(() => {
-                const out: React.ReactNode[] = [];
-                let currentGroup: string | null = null;
-                filteredItems.forEach((it, idx) => {
-                  if (it.group?.en && it.group.en !== currentGroup) {
-                    currentGroup = it.group.en;
-                    out.push(
-                      <div
-                        key={`grp_${idx}`}
-                        className={cx(
-                          "px-3 pb-1.5 pt-5 text-[10px] uppercase tracking-widest",
-                          isRTL && "text-right"
-                        )}
-                        style={{ color: "var(--muted)", fontWeight: 800 }}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full shrink-0" style={{ background: GROUP_COLORS[it.group.en] || TRYGC.purple }} />
-                          <BiText bi={it.group} mode={langMode} />
-                        </span>
-                      </div>
-                    );
-                  }
-                  const active = it.key === page;
-                  out.push(
-                    <button
-                      key={it.key}
-                      onClick={() => setPage(it.key)}
-                      className={cx(
-                        "group w-full rounded-xl px-3 py-2.5 text-left text-sm transition-all duration-200",
-                        isRTL && "text-right"
-                      )}
-                      style={{
-                        fontWeight: active ? 700 : 500,
-                        background: active ? TRYGC.orange : "transparent",
-                        color: active ? "#fff" : "var(--muted)",
-                      }}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {it.icon}
-                        <span className="flex-1 truncate">
-                          <BiText bi={it.label} mode={langMode} />
-                        </span>
-                        {!active && (
-                          <ChevronRight
-                            className={cx(
-                              "h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100",
-                              isRTL && "rotate-180"
-                            )}
-                          />
-                        )}
-                      </div>
-                    </button>
-                  );
-                });
-                return out;
-              })()}
-            </nav>
-
-            {/* Controls */}
-            <div className="space-y-2.5 border-t pt-4" style={{ borderColor: "var(--line)" }}>
-              <ToggleGroup<LangMode>
-                value={langMode}
-                onChange={setLangMode}
-                right={isRTL}
-                options={[
-                  { value: "BOTH", label: "BOTH", icon: <Globe className="h-3.5 w-3.5" /> },
-                  { value: "EN", label: "EN" },
-                  { value: "AR", label: "AR" },
-                ]}
-              />
-              <ToggleGroup<"dark" | "light">
-                value={theme}
-                onChange={setTheme}
-                right={isRTL}
-                options={[
-                  { value: "dark", label: "Dark", icon: <Moon className="h-3.5 w-3.5" /> },
-                  { value: "light", label: "Light", icon: <Sun className="h-3.5 w-3.5" /> },
-                ]}
-              />
-            </div>
-          </div>
-        </aside>
-
-        {/* ─── Main Content ─────────────────────────────── */}
-        <main className="min-w-0 flex-1">
-          {/* Top Bar */}
-          <div
-            className="sticky top-0 z-10"
-            style={{
-              background: "var(--card)",
-              borderBottom: "1px solid var(--line)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }}
-          >
-            <div className="flex items-center justify-between gap-4 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="rounded-lg p-2 transition-all duration-200 hover:scale-105"
-                  style={{ border: "1px solid var(--line)", color: "var(--text)" }}
-                >
-                  {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-                </button>
-                <div className={cx("text-sm", isRTL ? "font-ar" : "font-en")} style={{ fontWeight: 700, color: "var(--text)" }}>
-                  <BiText bi={PAGE_TITLES[page] || topTitle} mode={langMode} />
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* Campaign Selector */}
-                <select
-                  value={selectedCampaign}
-                  onChange={(e) => setSelectedCampaign(e.target.value)}
-                  className="rounded-lg px-3 py-1.5 text-xs outline-none transition-all"
-                  style={{
-                    background: "var(--bg)",
-                    border: "1px solid var(--line)",
-                    color: "var(--text)",
-                    fontWeight: 600,
-                  }}
-                >
-                  {campaigns.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-                <Pill text="v3.0" tone="purple" />
-                <Pill text="Ops Lead" tone="info" />
-              </div>
-            </div>
-          </div>
-
-          {/* Page Content */}
-          <div className={cx("px-6 py-6 max-w-6xl mx-auto", isRTL ? "font-ar" : "font-en")}>
-            <PageContent page={page} mode={langMode} onNavigate={setPage} />
-          </div>
-        </main>
-      </div>
     </div>
   );
 }

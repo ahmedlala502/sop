@@ -1,10 +1,8 @@
 import React from "react";
-import { LangMode, BiText, H, PageMeta, KBCard, DiagramCard, buildFlowSVG, TRYGC, escXml } from "./kb-types";
+import { LangMode, BiText, H, PageMeta, KBCard, DiagramCard, buildFlowSVG, MAP_COLORS, TRYGC, escXml } from "./kb-types";
 
-function getColors(isDark = true) {
-  return isDark
-    ? { bg: TRYGC.darkBg, card: TRYGC.darkCard, line: TRYGC.darkLine, accent: TRYGC.orange, text: TRYGC.darkText, muted: TRYGC.darkMuted }
-    : { bg: TRYGC.lightBg, card: TRYGC.lightCard, line: TRYGC.lightLine, accent: TRYGC.orange, text: TRYGC.lightText, muted: TRYGC.lightMuted };
+function getColors() {
+  return MAP_COLORS;
 }
 
 function makeE2ESVG(c: ReturnType<typeof getColors>): string {
@@ -18,40 +16,45 @@ function makeE2ESVG(c: ReturnType<typeof getColors>): string {
     { label: "Fix Gaps", sla: "≤24h", owner: "Follow-Up" },
     { label: "Report", sla: "24–48h", owner: "Coordination" },
   ];
-  const pw = (W - 80) / phases.length;
+  // Dedicated label gutter keeps lane names clear of the first phase value.
+  const LEFT = 40;
+  const GUTTER = 92;
+  const chartX = LEFT + GUTTER;
+  const pw = (W - 80 - GUTTER) / phases.length;
 
   let svg = `<rect width="${W}" height="${H}" rx="20" fill="${c.bg}"/>`;
   svg += `<text x="${W / 2}" y="40" text-anchor="middle" font-size="20" font-family="Inter,sans-serif" fill="${c.text}" font-weight="800">E2E Campaign Workflow (Swimlanes)</text>`;
 
   // Phase headers
   phases.forEach((p, i) => {
-    const x = 40 + i * pw;
+    const x = chartX + i * pw;
     svg += `<rect x="${x}" y="60" width="${pw - 10}" height="40" rx="12" fill="${c.card}" stroke="${c.line}" stroke-width="1.5"/>`;
-    svg += `<text x="${x + pw / 2 - 5}" y="85" text-anchor="middle" font-size="13" font-family="Inter,sans-serif" fill="${c.text}" font-weight="700">${escXml(p.label)}</text>`;
+    svg += `<text x="${x + (pw - 10) / 2}" y="85" text-anchor="middle" font-size="13" font-family="Inter,sans-serif" fill="${c.text}" font-weight="700">${escXml(p.label)}</text>`;
   });
 
   // Lane: Owner row
   svg += `<rect x="40" y="115" width="${W - 80}" height="60" rx="14" fill="${c.card}" stroke="${c.line}" stroke-width="1.5"/>`;
-  svg += `<text x="50" y="150" font-size="11" font-family="Inter,sans-serif" fill="${c.muted}" font-weight="700">OWNER</text>`;
+  svg += `<line x1="${chartX - 14}" y1="60" x2="${chartX - 14}" y2="245" stroke="${c.line}" stroke-width="1.5"/>`;
+  svg += `<text x="${LEFT + 18}" y="150" font-size="11" font-family="Inter,sans-serif" fill="${c.muted}" font-weight="700" letter-spacing="0.08em">OWNER</text>`;
   phases.forEach((p, i) => {
-    const x = 40 + i * pw;
-    svg += `<text x="${x + pw / 2 - 5}" y="150" text-anchor="middle" font-size="12" font-family="Inter,sans-serif" fill="${c.text}" font-weight="600">${escXml(p.owner)}</text>`;
+    const x = chartX + i * pw;
+    svg += `<text x="${x + (pw - 10) / 2}" y="150" text-anchor="middle" font-size="12" font-family="Inter,sans-serif" fill="${c.text}" font-weight="600">${escXml(p.owner)}</text>`;
   });
 
   // Lane: SLA row
   svg += `<rect x="40" y="185" width="${W - 80}" height="60" rx="14" fill="${c.card}" stroke="${c.line}" stroke-width="1.5"/>`;
-  svg += `<text x="50" y="220" font-size="11" font-family="Inter,sans-serif" fill="${c.muted}" font-weight="700">SLA</text>`;
+  svg += `<text x="${LEFT + 18}" y="220" font-size="11" font-family="Inter,sans-serif" fill="${c.muted}" font-weight="700" letter-spacing="0.08em">SLA</text>`;
   phases.forEach((p, i) => {
-    const x = 40 + i * pw;
-    svg += `<rect x="${x + 15}" y="200" width="${pw - 40}" height="26" rx="13" fill="${c.accent}"/>`;
-    svg += `<text x="${x + pw / 2 - 5}" y="218" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#fff" font-weight="700">${escXml(p.sla)}</text>`;
+    const x = chartX + i * pw;
+    svg += `<rect x="${x + 14}" y="200" width="${pw - 38}" height="26" rx="13" fill="${c.accent}"/>`;
+    svg += `<text x="${x + (pw - 10) / 2}" y="218" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#fff" font-weight="700">${escXml(p.sla)}</text>`;
   });
 
   // Arrows
   phases.forEach((_, i) => {
     if (i < phases.length - 1) {
-      const x1 = 40 + i * pw + pw - 10;
-      const x2 = 40 + (i + 1) * pw;
+      const x1 = chartX + i * pw + pw - 10;
+      const x2 = chartX + (i + 1) * pw;
       svg += `<line x1="${x1}" y1="80" x2="${x2}" y2="80" stroke="${c.accent}" stroke-width="2" marker-end="url(#ah)"/>`;
     }
   });
@@ -71,7 +74,7 @@ function makeE2ESVG(c: ReturnType<typeof getColors>): string {
     svg += `<text x="60" y="${280 + i * 14}" font-size="10" font-family="Inter,sans-serif" fill="${c.muted}" font-weight="500">${escXml(d)}</text>`;
   });
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
     <defs><marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="${c.accent}"/></marker></defs>
     ${svg}</svg>`;
 }
@@ -81,7 +84,7 @@ export function WorkflowE2E({ mode }: { mode: LangMode }) {
   const c = getColors();
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Operations Lead", ar: "قائد العمليات" }} approver={{ en: "CEO", ar: "الرئيس التنفيذي" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "CEO", ar: "الرئيس التنفيذي" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "E2E Workflow Map (Swimlanes)", ar: "خريطة سير العمل من البداية للنهاية" }} mode={mode} subtitle={{ en: "Full campaign lifecycle from intake to final report", ar: "دورة حياة الحملة الكاملة من الاستلام إلى التقرير النهائي" }} />
       <DiagramCard title={{ en: "E2E Swimlane Diagram", ar: "مخطط السويملين الكامل" }} mode={mode} svg={makeE2ESVG(c)} />
       <KBCard title={{ en: "Phase Details", ar: "تفاصيل المراحل" }} mode={mode}>
@@ -125,7 +128,7 @@ export function WorkflowCoordination({ mode }: { mode: LangMode }) {
   });
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Coordination Lead", ar: "قائد التنسيق" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "Coordination Workflow Map", ar: "خريطة سير عمل التنسيق" }} mode={mode} />
       <DiagramCard title={{ en: "Coordination Flow", ar: "تدفق التنسيق" }} mode={mode} svg={svg} />
       <KBCard title={{ en: "Step Details", ar: "تفاصيل الخطوات" }} mode={mode}>
@@ -165,7 +168,7 @@ export function WorkflowChat({ mode }: { mode: LangMode }) {
   });
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Chat Team Lead", ar: "قائد فريق الشات" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "Chat/WhatsApp Workflow Map", ar: "خريطة سير عمل الشات" }} mode={mode} />
       <DiagramCard title={{ en: "Chat Flow", ar: "تدفق الشات" }} mode={mode} svg={svg} />
       <KBCard title={{ en: "Step Details (EN/AR)", ar: "تفاصيل الخطوات" }} mode={mode}>
@@ -205,7 +208,7 @@ export function WorkflowFollowUp({ mode }: { mode: LangMode }) {
   });
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Follow-Up Lead", ar: "قائد المتابعة" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "Follow-Up Workflow Map", ar: "خريطة سير عمل المتابعة" }} mode={mode} />
       <DiagramCard title={{ en: "Follow-Up Flow", ar: "تدفق المتابعة" }} mode={mode} svg={svg} />
       <KBCard title={{ en: "Step Details (EN/AR)", ar: "تفاصيل الخطوات" }} mode={mode}>
@@ -245,7 +248,7 @@ export function WorkflowCoverage({ mode }: { mode: LangMode }) {
   });
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Coverage Lead", ar: "قائد التغطية" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "Coverage Workflow Map", ar: "خريطة سير عمل التغطية" }} mode={mode} />
       <DiagramCard title={{ en: "Coverage Flow", ar: "تدفق التغطية" }} mode={mode} svg={svg} />
       <KBCard title={{ en: "Step Details (EN/AR)", ar: "تفاصيل الخطوات" }} mode={mode}>
@@ -285,7 +288,7 @@ export function WorkflowCommunity({ mode }: { mode: LangMode }) {
   });
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={{ en: "Community Lead", ar: "قائد الكوميونيتي" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={{ en: "Operations Lead", ar: "قائد العمليات" }} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
       <H title={{ en: "Community Workflow Map", ar: "خريطة سير عمل الكوميونيتي" }} mode={mode} />
       <DiagramCard title={{ en: "Community Flow", ar: "تدفق الكوميونيتي" }} mode={mode} svg={svg} />
       <KBCard title={{ en: "Step Details (EN/AR)", ar: "تفاصيل الخطوات" }} mode={mode}>

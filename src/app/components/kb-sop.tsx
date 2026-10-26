@@ -457,27 +457,14 @@ const SOPS: Record<string, SOPData> = { ...SOPS_BASE, ...(HANDBOOK_SOPS as Recor
 
 // ─── SOP Page Renderer ───────────────────────────────────────
 export function SOPPage({ mode, sopKey }: { mode: LangMode; sopKey: string }) {
+  const [expanded, setExpanded] = useState(true);
   const sop = SOPS[sopKey];
   if (!sop) return <div style={{ color: "var(--text)" }}>SOP not found</div>;
   const color = TEAM_COLORS[sopKey] || TRYGC.purple;
-  const [expanded, setExpanded] = useState(true);
 
   return (
     <div className="space-y-6">
-      <PageMeta mode={mode} owner={sop.owner} approver={sop.approver} version="3.0" lastUpdated="2026-02-06" nextReview="2026-03-06" />
-
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="rounded-2xl p-3 shrink-0" style={{ background: color, color: "#fff" }}>{sop.teamIcon}</div>
-        <div className="min-w-0">
-          <h1 className="text-2xl" style={{ fontWeight: 800, color: "var(--text)" }}><BiText bi={sop.teamName} mode={mode} /></h1>
-          <div className="text-sm mt-1" style={{ color: "var(--muted)" }}>
-            <BiText bi={{ en: "Owner: ", ar: "المالك: " }} mode={mode} /><BiText bi={sop.owner} mode={mode} />
-            {" · "}
-            <BiText bi={{ en: "Approver: ", ar: "المعتمد: " }} mode={mode} /><BiText bi={sop.approver} mode={mode} />
-          </div>
-        </div>
-      </div>
+      <PageMeta mode={mode} owner={{ en: "Core Team Sept Workshop", ar: "الفريق الأساسي لورشة سبتمبر" }} approver={sop.approver} version="3.0" lastUpdated="2026-09-15" nextReview="2027-03-15" />
 
       {/* What this team does */}
       <KBCard title={{ en: "What this team does", ar: "ماذا يفعل هذا الفريق" }} mode={mode}>

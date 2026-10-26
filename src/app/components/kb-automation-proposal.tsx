@@ -10,6 +10,7 @@ import {
   SectionDivider,
   buildFlowSVG,
   DiagramCard,
+  MAP_COLORS,
   Bi,
   LangMode,
   TRYGC,
@@ -40,14 +41,7 @@ function effortTone(e: string): "success" | "info" | "warning" | "danger" {
   return "info";
 }
 
-const flowColors = {
-  bg: TRYGC.darkCard,
-  card: TRYGC.purpleDark,
-  line: TRYGC.darkLine,
-  accent: TRYGC.orange,
-  text: TRYGC.offWhite,
-  muted: TRYGC.lavender,
-};
+const flowColors = MAP_COLORS;
 
 // ─── Proposal data (rephrased from the V4.2 proposal document) ─
 const PROPOSALS: Proposal[] = [
